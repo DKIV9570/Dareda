@@ -1,0 +1,53 @@
+mortal-replay
+Copyright (C) 2026 mortal-replay contributors
+
+本程序是自由软件:你可以依据自由软件基金会发布的 GNU Affero 通用公共许可证
+(版本 3 或任何更新版本)的条款重新分发和/或修改它。完整条款见 LICENSE。
+
+为什么必须是 AGPL-3.0:本项目依赖并修改了 libriichi(Mortal 的一部分),后者以
+AGPL-3.0-or-later 授权。patches/replay.rs 是 libriichi 的衍生作品。**注意 AGPL 第 13
+条:如果你把本程序(或其修改版)作为网络服务提供,你必须向所有通过网络与之交互的
+用户提供完整对应源码。**
+
+
+================================================================================
+第三方组件与来源
+================================================================================
+
+Mortal / libriichi
+  https://github.com/Equim-chan/Mortal
+  AGPL-3.0-or-later,作者 Equim。
+  本项目**不包含** Mortal 的任何代码,只提供一个补丁(patches/replay.rs 与
+  patches/arena-mod.patch),需由使用者自行 clone 上游后应用。
+
+Mortal 模型权重
+  **本项目不分发任何模型权重。**
+  Mortal 作者出于防作弊考虑,刻意不公开发布训练好的权重,并以受控的在线服务
+  (https://mjai.ekyu.moe)替代。见作者说明:
+  https://gist.github.com/Equim-chan/cf3f01735d5d98f1e7be02e94b288c56
+  使用者若选择第三方 checkpoint(如 HuggingFace VoidShine/mortal-298k),
+  须自行获取并自行承担相应责任,并遵守该 checkpoint 及其训练数据来源的条款。
+
+liqi.proto(proto/liqi.proto 与由其编译的 src/mortal_replay/majsoul/liqi.desc)
+  来源:https://github.com/MahjongRepository/mahjong_soul_api (ms/protocol.proto)
+  **该上游仓库未声明许可证。** 此文件是对雀魂客户端通信协议的逆向描述(线格式
+  schema)。此处保留仅为让解码可离线运行;如上游作者或权利方提出异议,将立即移除。
+  重新生成:
+    python -m grpc_tools.protoc -Iproto \
+      --descriptor_set_out=src/mortal_replay/majsoul/liqi.desc \
+      --include_imports proto/liqi.proto
+
+tools/majsoul-ws-capture.user.js 等
+  本项目原创。抓包思路(在页面上下文替换 WebSocket 构造函数)是通用技术;
+  mjai-reviewer 的 downloadlogs 用户脚本给了本项目在协议层面的启发:
+  https://github.com/Equim-chan/mjai-reviewer
+
+
+================================================================================
+使用条款与风险(请务必阅读 README 的"使用须知")
+================================================================================
+
+* 本项目仅用于**已结束对局的赛后复盘**。不提供、也不应被用于对局进行中的任何辅助。
+* 抓取牌谱需要在浏览器中修改雀魂客户端行为,这**很可能违反雀魂的用户协议**,
+  并可能导致账号被封。是否使用由你自行决定,风险自负。
+* 作者与贡献者不对因使用本项目造成的任何账号处罚或其他损失负责。

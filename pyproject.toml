@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mortal-replay"
+version = "0.1.0"
+description = "Mortal counterfactual replay — 在同一牌山下用 Mortal 重打人类牌谱(雀魂优先)"
+requires-python = ">=3.11"
+# 只要运行时,不要 grpcio-tools —— 编译产物是随包的 liqi.desc(描述符集),
+# 用它而非 *_pb2.py 是为了避开"生成代码要求 protobuf>=5"的版本闸门,
+# 好和机器上钉着 protobuf 4.x 的库(googleapis-common-protos / wandb 等)共存。
+dependencies = ["protobuf>=4.25"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+# 重新编译 proto/liqi.proto 时才需要:
+#   python -m grpc_tools.protoc -Iproto --descriptor_set_out=src/mortal_replay/majsoul/liqi.desc \
+#       --include_imports proto/liqi.proto
+proto = ["grpcio-tools"]
+
+[project.scripts]
+mortal-replay = "mortal_replay.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"mortal_replay.majsoul" = ["liqi.desc"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

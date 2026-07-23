@@ -1,0 +1,25 @@
+diff --git a/libriichi/src/arena/mod.rs b/libriichi/src/arena/mod.rs
+index 880cf87..8b54126 100644
+--- a/libriichi/src/arena/mod.rs
++++ b/libriichi/src/arena/mod.rs
+@@ -1,10 +1,12 @@
+ mod board;
+ mod game;
+ mod one_vs_three;
++mod replay;
+ mod result;
+ mod two_vs_two;
+ 
+ pub use board::Board;
++pub use replay::{KyokuOutcome, KyokuReplay};
+ pub use result::GameResult;
+ 
+ use crate::py_helper::add_submodule;
+@@ -21,5 +23,7 @@ pub(crate) fn register_module(
+     let m = PyModule::new(py, "arena")?;
+     m.add_class::<OneVsThree>()?;
+     m.add_class::<TwoVsTwo>()?;
++    m.add_class::<KyokuReplay>()?;
++    m.add_class::<KyokuOutcome>()?;
+     add_submodule(py, prefix, super_mod, &m)
+ }

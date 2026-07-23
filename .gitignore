@@ -1,0 +1,25 @@
+# 上游源码,按 README 的命令重新 clone;补丁在 patches/
+vendor/
+
+# 权重 130 MB,从 HuggingFace 拉
+models/*.pth
+
+# 抓包与解出来的牌谱 —— 含账号昵称等个人信息,别提交
+majsoul-ws-*.json
+record*.json
+replay_result*.json
+
+# 开发过程的设计文档与实测记录(含具体牌谱的数字),不对外
+DESIGN.md
+mortal-replay-spec.md
+
+# Rust
+target/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
