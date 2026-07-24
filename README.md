@@ -24,7 +24,7 @@
 - **只用来复盘打完的牌。** 不要用于正在进行的对局。
 - **取牌谱需要在浏览器里改雀魂客户端,可能违反用户协议、有封号风险。** 用不用你自己
   决定,建议用小号。
-- **本项目不含 AI 模型,也不提供模型权重**,需要你自己去下(见安装第 6 步)。许可证
+- **本项目不含 AI 模型,也不提供模型权重**(安装脚本会自动从第三方下)。许可证
   AGPL-3.0,详见 [NOTICE](NOTICE)。
 
 ## 装
@@ -150,10 +150,10 @@ New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
 ```
 
 **`import libriichi` 报 `dynamic module does not define module export function`**
-编译产物没改名。第 5 步要把 `riichi.dll` 复制成 `libriichi.pyd`(Linux 是
-`libriichi.so`)。
+编译产物文件名不对——要把 `riichi.dll` 复制成 `libriichi.pyd`(Linux/macOS 是
+`libriichi.so`)。用安装脚本会自动做好;手动装漏了这步才会碰到。
 
-**第 3 步 `git apply` 失败**
+**打补丁(`git apply`)失败**
 上游改动导致补丁对不上。手动往 `vendor/Mortal/libriichi/src/arena/mod.rs` 加这四行即可:
 ```rust
 mod replay;
@@ -169,9 +169,9 @@ m.add_class::<KyokuOutcome>()?;
 git -C vendor/Mortal reset --mixed HEAD~1
 ```
 
-**装完 `pip install` 把别的项目搞坏了**
-没用虚拟环境。dareda 依赖较新的 protobuf,可能顶掉你环境里的旧版本。回到安装第 1 步用
-`venv` 重来。
+**装完把别的 Python 项目搞坏了**
+你手动装时没用虚拟环境。dareda 依赖较新的 protobuf,可能顶掉你环境里的旧版本。用
+安装脚本就不会有这问题(它会自动建独立的 `.venv`)。
 
 ## 许可证
 
