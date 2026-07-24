@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="378" viewBox="0 0 1280 378" role="img" aria-label="誰だ / dareda — 这把怪谁?同水平重打 30 次的名次分布:一位 46.7%、二位 23.3%、三位 13.3%、四位 16.7%;实际拿到四位,属于偏背。">
+  <!-- 自带深色底,GitHub 明暗两种主题下观感一致 -->
+  <rect width="1280" height="378" fill="#1a1a19"/>
+  <rect x="0" y="0" width="1280" height="3" fill="#3987e5"/>
+
+  <!-- ── 左栏:标题 ── -->
+  <text x="72" y="118" fill="#ffffff" font-family="'Hiragino Sans','Yu Gothic','Microsoft YaHei',sans-serif" font-size="66" font-weight="700">誰だ</text>
+  <text x="215" y="118" fill="#c3c2b7" font-family="ui-monospace,'SF Mono',Consolas,monospace" font-size="30">/ dareda</text>
+
+  <text x="72" y="176" fill="#3987e5" font-family="'Hiragino Sans','Microsoft YaHei',sans-serif" font-size="38" font-weight="700">这把怪谁?</text>
+
+  <text x="72" y="228" fill="#c3c2b7" font-family="'Hiragino Sans','Microsoft YaHei',sans-serif" font-size="21">吃四了想骂发牌姬?先让科学麻将分分锅。</text>
+  <text x="72" y="262" fill="#c3c2b7" font-family="'Hiragino Sans','Microsoft YaHei',sans-serif" font-size="21">把牌山原样取出来,让 AI 在<tspan fill="#ffffff" font-weight="700">一模一样的发牌</tspan>下重打几十遍。</text>
+
+  <!-- 标签行 -->
+  <g font-family="ui-monospace,'SF Mono',Consolas,monospace" font-size="15">
+    <rect x="72" y="296" width="112" height="30" rx="15" fill="none" stroke="#3987e5" stroke-width="1.5"/>
+    <text x="128" y="316" fill="#3987e5" text-anchor="middle">雀魂 · 赛后</text>
+    <rect x="196" y="296" width="128" height="30" rx="15" fill="none" stroke="#52514e" stroke-width="1.5"/>
+    <text x="260" y="316" fill="#c3c2b7" text-anchor="middle">Mortal / 蒙特卡洛</text>
+    <rect x="336" y="296" width="96" height="30" rx="15" fill="none" stroke="#52514e" stroke-width="1.5"/>
+    <text x="384" y="316" fill="#c3c2b7" text-anchor="middle">AGPL-3.0</text>
+  </g>
+
+  <!-- ── 右栏:名次分布 ── -->
+  <g transform="translate(700, 0)">
+    <text x="0" y="86" fill="#ffffff" font-family="'Hiragino Sans','Microsoft YaHei',sans-serif" font-size="19" font-weight="700">以你自己的水平,这副牌重打 30 次</text>
+
+    <!-- 条形:单一序列用蓝;实际落点用红做重点标注(非分类,而是状态强调) -->
+    <g font-family="ui-monospace,'SF Mono',Consolas,monospace" font-size="17">
+      <!-- 1位 46.7% -->
+      <text x="0" y="132" fill="#c3c2b7">1位</text>
+      <rect x="46" y="118" width="327" height="20" rx="4" fill="#3987e5"/>
+      <text x="387" y="133" fill="#ffffff">46.7%</text>
+      <!-- 2位 23.3% -->
+      <text x="0" y="172" fill="#c3c2b7">2位</text>
+      <rect x="46" y="158" width="163" height="20" rx="4" fill="#3987e5"/>
+      <text x="223" y="173" fill="#c3c2b7">23.3%</text>
+      <!-- 3位 13.3% -->
+      <text x="0" y="212" fill="#c3c2b7">3位</text>
+      <rect x="46" y="198" width="93" height="20" rx="4" fill="#3987e5"/>
+      <text x="153" y="213" fill="#c3c2b7">13.3%</text>
+      <!-- 4位 16.7% —— 实际落点 -->
+      <text x="0" y="252" fill="#ffffff" font-weight="700">4位</text>
+      <rect x="46" y="238" width="117" height="20" rx="4" fill="#e66767"/>
+      <text x="177" y="253" fill="#e66767" font-weight="700">16.7%</text>
+      <text x="248" y="253" fill="#e66767">← 你实际在这</text>
+    </g>
+
+    <!-- 结论 -->
+    <line x1="0" y1="286" x2="500" y2="286" stroke="#383835" stroke-width="1"/>
+    <text x="0" y="318" fill="#ffffff" font-family="'Hiragino Sans','Microsoft YaHei',sans-serif" font-size="19">
+      <tspan font-weight="700">判断:偏背</tspan><tspan fill="#c3c2b7" font-size="17"> —— 同水平只有 17% 会打到四位</tspan>
+    </text>
+    <text x="0" y="346" fill="#9a998f" font-family="'Hiragino Sans','Microsoft YaHei',sans-serif" font-size="15">这把是运气差,不是你菜。(开喷)</text>
+  </g>
+</svg>
