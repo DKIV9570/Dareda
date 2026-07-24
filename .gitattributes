@@ -1,6 +1,10 @@
 # install.ps1 含中文,PowerShell 5.1 靠 UTF-8 BOM 才能正确识别编码。
 # 标成 UTF-8 并保留 CRLF,别让 git 的行尾/编码归一化把 BOM 弄丢。
 install.ps1 text working-tree-encoding=UTF-8 eol=crlf
+# .sh 必须 LF,CRLF 会让 Linux/macOS 报 "bad interpreter"
 install.sh   text eol=lf
+run.sh       text eol=lf
+# .cmd 保 CRLF(Windows 批处理)
+run.cmd      text eol=crlf
 *.py         text eol=lf
 *.rs         text eol=lf
