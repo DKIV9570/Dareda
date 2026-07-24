@@ -108,6 +108,34 @@ mkdir -p models && curl -L -o models/mortal_298k.pth \
   https://huggingface.co/VoidShine/mortal-298k/resolve/main/mortal_298k.pth
 ```
 
+### Windows 用户:请把项目放在**短路径**下
+
+比如 `C:\dev\dareda`,不要放在很深的目录里。
+
+Windows 默认有 260 字符的路径上限,而 **torch 的 wheel 里带了极深的第三方许可证目录**
+(`torch-*.dist-info/licenses/third_party/flash-attention/third_party/aiter/3rdparty/...`)。
+实测这部分**光它自己就占 138 字符** —— 也就是说你的项目路径超过约 120 字符就会炸:
+
+```
+ERROR: Could not install packages due to an OSError:
+[WinError 206] 文件名或扩展名太长
+```
+
+**更坑的是它装到一半就停了**,留下一个残缺的 torch,之后 `import torch` 报的却是
+莫名其妙的 `ModuleNotFoundError: No module named 'torchgen'` —— 和真正的原因毫无关系,
+而且这个残骸连 `pip uninstall` 都卸不掉(没有 RECORD 文件)。
+
+遇到这个情况:**删掉整个 `.venv` 重来**,并换到短路径。或者开启 Windows 长路径支持:
+
+```powershell
+# 管理员 PowerShell
+New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+  -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+git config --system core.longpaths true
+```
+
+### 设置 PYTHONPATH
+
 跑之前确认 `libriichi` 和 `vendor/Mortal/mortal` 都在 `PYTHONPATH` 里:
 
 ```bash
