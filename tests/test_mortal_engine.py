@@ -2,18 +2,18 @@
 
 只测**纯 Python 的那一半** —— 结果分类与结算通路。真正跑牌需要构建好的
 libriichi 扩展和 130 MB 权重,不适合放进单测;那条路由 scripts/smoke_kyoku.py
-和 `mortal-replay replay` 覆盖。
+和 `dareda replay` 覆盖。
 """
 
 from types import SimpleNamespace
 
 import pytest
 
-from mortal_replay.engine.mortal_engine import _classify, to_hand_outcome
-from mortal_replay.engine.base import HandSetup
-from mortal_replay.majsoul.parse import parse_record
-from mortal_replay.majsoul.synth import synth_record
-from mortal_replay.rules import Outcome, TableState, settle
+from dareda.engine.mortal_engine import _classify, to_hand_outcome
+from dareda.engine.base import HandSetup
+from dareda.majsoul.parse import parse_record
+from dareda.majsoul.synth import synth_record
+from dareda.rules import Outcome, TableState, settle
 
 
 def _outcome(deltas, *, hora=False, abortive=False, kyotaku_left=0, log=()):

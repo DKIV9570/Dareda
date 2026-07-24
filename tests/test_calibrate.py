@@ -2,7 +2,7 @@
 
 import math
 
-from mortal_replay.analysis.calibrate import (
+from dareda.analysis.calibrate import (
     BoltzmannParams,
     calibrate,
     mean_softmax_ev_loss,

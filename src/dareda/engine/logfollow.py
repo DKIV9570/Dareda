@@ -43,7 +43,7 @@ def _same_action(a: dict, b: dict) -> bool:
 class LogFollowEngine:
     """单小局:照人类日志打,脱轨/英雄座回落 Mortal。
 
-    :param human_events: 本小局的 mjai 事件列表(:func:`mortal_replay.majsoul.mjai_convert.convert_hand`)。
+    :param human_events: 本小局的 mjai 事件列表(:func:`dareda.majsoul.mjai_convert.convert_hand`)。
     :param follow_seats: 照日志打的**绝对座次**集合。不在其中的即英雄座,全程 Mortal。
     :param mortal_engine: ``engine_type='mortal'`` 的引擎,用来建 4 个 fallback Bot。
     :param on_divergence: 可选 ``(seat, position)`` 回调,首次脱轨时触发,供保真度统计。

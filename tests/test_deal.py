@@ -1,6 +1,6 @@
 import pytest
 
-from mortal_replay.deal import DEAD_WALL_SIZE, WallConvention, deal, seat_order, split_wall
+from dareda.deal import DEAD_WALL_SIZE, WallConvention, deal, seat_order, split_wall
 
 
 @pytest.fixture

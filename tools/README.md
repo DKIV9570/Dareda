@@ -21,7 +21,7 @@ Unity WebGL 开不了原始 socket,网络必须借道浏览器 API。所以在 J
 1. 装 [Tampermonkey](https://www.tampermonkey.net/),把本文件粘进去,确认已启用
 2. **刷新雀魂页面** —— 必须刷新,`@run-at document-start` 要早于游戏建连
 3. 登录 → 点开牌谱 → 等回放界面出来 → 按 <kbd>D</kbd>
-4. `mortal-replay decode-capture --capture majsoul-ws-*.json --out record.json`
+4. `dareda decode-capture --capture majsoul-ws-*.json --out record.json`
 
 控制台会实时打印录到多少帧。按 D 没动静的话,在控制台执行 `__mjsCapture.dump()`。
 
@@ -41,7 +41,7 @@ Unity WebGL 开不了原始 socket,网络必须借道浏览器 API。所以在 J
 1. 登录雀魂,点开牌谱,等回放界面加载出来
 2. <kbd>F12</kbd> → Console
 3. 把 [dump-raw-record.js](dump-raw-record.js) 全文粘进去,回车
-4. 下载 `<uuid>.json` → `mortal-replay verify --record <uuid>.json`
+4. 下载 `<uuid>.json` → `dareda verify --record <uuid>.json`
 
 它只做两件事:调 `fetchGameRecord` 拿原始 record、存成文件。**不碰**
 `cfg.fan` / `cfg.level_definition` / `cfg.item_definition` 那些客户端配置表 ——

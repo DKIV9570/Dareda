@@ -50,7 +50,7 @@ class CounterfactualReplayEngine:
     """driver 认的 :class:`ReplayEngine`:英雄座 Mortal,对手照日志打。
 
     :param record: 人类牌谱(需含动作流,即抓包解出来的那种)。
-    :param actions_by_round: 每小局动作,见 :func:`mortal_replay.verify.split_actions_by_round`。
+    :param actions_by_round: 每小局动作,见 :func:`dareda.verify.split_actions_by_round`。
     :param hero_seat: 换成 Mortal 的绝对座次(通常是你)。
     :param state_file: Mortal 权重。
     """

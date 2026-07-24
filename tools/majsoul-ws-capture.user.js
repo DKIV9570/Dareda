@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         majsoul-ws-capture
-// @namespace    mortal-replay
+// @namespace    dareda
 // @version      0.2.0
 // @description  录下雀魂客户端的 WebSocket 原始帧,用于离线提取牌谱牌山
 // @include      https://game.maj-soul.com/*
@@ -30,8 +30,8 @@
 //   2. 刷新雀魂页面(必须刷新!脚本要在建连前生效)
 //   3. 登录 → 点开要导出的牌谱 → 等回放界面出来
 //   4. 按 D 下载 majsoul-ws-<时间戳>.json(过滤到位的话应当远小于 1 MB)
-//   5. mortal-replay decode-capture --capture majsoul-ws-*.json --out record.json
-//   6. mortal-replay verify --record record.json
+//   5. dareda decode-capture --capture majsoul-ws-*.json --out record.json
+//   6. dareda verify --record record.json
 
 (function () {
     "use strict";

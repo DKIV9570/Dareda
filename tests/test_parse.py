@@ -1,8 +1,8 @@
 import pytest
 
-from mortal_replay.majsoul.fetch import parse_paipu_link
-from mortal_replay.majsoul.parse import ParseError, parse_record
-from mortal_replay.majsoul.synth import synth_record
+from dareda.majsoul.fetch import parse_paipu_link
+from dareda.majsoul.parse import ParseError, parse_record
+from dareda.majsoul.synth import synth_record
 
 
 def test_parses_normalized_form():
@@ -110,7 +110,7 @@ def test_downloadlogs_survives_omitted_protobuf_defaults():
 
 
 def test_downloadlogs_still_passes_haipai_assertion():
-    from mortal_replay.verify import verify_record
+    from dareda.verify import verify_record
 
     rec = parse_record(_as_downloadlogs(synth_record(seed=9, k=10)))
     assert verify_record(rec).ok
@@ -122,7 +122,7 @@ def test_downloadlogs_without_verboselog_gives_actionable_error():
 
 
 def test_seat_of_account():
-    from mortal_replay.majsoul.parse import seat_of_account
+    from dareda.majsoul.parse import seat_of_account
 
     dl = _as_downloadlogs(synth_record(seed=9, k=2))
     for acc, aid in zip(dl["mjshead"]["accounts"], [11, 22, 12345678, 44]):

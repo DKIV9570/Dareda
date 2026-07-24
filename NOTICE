@@ -1,5 +1,5 @@
-mortal-replay
-Copyright (C) 2026 mortal-replay contributors
+dareda
+Copyright (C) 2026 dareda contributors
 
 本程序是自由软件:你可以依据自由软件基金会发布的 GNU Affero 通用公共许可证
 (版本 3 或任何更新版本)的条款重新分发和/或修改它。完整条款见 LICENSE。
@@ -28,13 +28,13 @@ Mortal 模型权重
   使用者若选择第三方 checkpoint(如 HuggingFace VoidShine/mortal-298k),
   须自行获取并自行承担相应责任,并遵守该 checkpoint 及其训练数据来源的条款。
 
-liqi.proto(proto/liqi.proto 与由其编译的 src/mortal_replay/majsoul/liqi.desc)
+liqi.proto(proto/liqi.proto 与由其编译的 src/dareda/majsoul/liqi.desc)
   来源:https://github.com/MahjongRepository/mahjong_soul_api (ms/protocol.proto)
   **该上游仓库未声明许可证。** 此文件是对雀魂客户端通信协议的逆向描述(线格式
   schema)。此处保留仅为让解码可离线运行;如上游作者或权利方提出异议,将立即移除。
   重新生成:
     python -m grpc_tools.protoc -Iproto \
-      --descriptor_set_out=src/mortal_replay/majsoul/liqi.desc \
+      --descriptor_set_out=src/dareda/majsoul/liqi.desc \
       --include_imports proto/liqi.proto
 
 tools/majsoul-ws-capture.user.js 等

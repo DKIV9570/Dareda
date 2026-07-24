@@ -3,7 +3,7 @@
 整个 replay 的地基。这里唯一有争议的是**牌山约定** —— 牌山数组的哪一段是配牌、
 王牌在头还是在尾。不同平台/不同 parser 的实现并不一致,而这件事无法从文档推,
 只能拿真牌谱撞:所以约定被做成可切换的枚举,由 §5 的断言来选出正确的那个
-(:func:`mortal_replay.verify.infer_convention`)。
+(:func:`dareda.verify.infer_convention`)。
 
 发牌顺序本身没有歧义:庄 → 下家 → 对家 → 上家,3 轮每人 4 张,最后每人 1 张。
 """

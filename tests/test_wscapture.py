@@ -11,11 +11,11 @@ import json
 
 import pytest
 
-from mortal_replay.majsoul.liqi import message_class
-from mortal_replay.majsoul.parse import parse_record
-from mortal_replay.majsoul.synth import synth_record
-from mortal_replay.majsoul.wscapture import CaptureError, decode_capture
-from mortal_replay.verify import verify_record
+from dareda.majsoul.liqi import message_class
+from dareda.majsoul.parse import parse_record
+from dareda.majsoul.synth import synth_record
+from dareda.majsoul.wscapture import CaptureError, decode_capture
+from dareda.verify import verify_record
 
 UUID = "250101-1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
 

@@ -5,10 +5,10 @@
 会红,而不是永远绿。
 """
 
-from mortal_replay.deal import WallConvention
-from mortal_replay.majsoul.parse import parse_record
-from mortal_replay.majsoul.synth import synth_record
-from mortal_replay.verify import infer_convention, verify_record
+from dareda.deal import WallConvention
+from dareda.majsoul.parse import parse_record
+from dareda.majsoul.synth import synth_record
+from dareda.verify import infer_convention, verify_record
 
 
 def test_synthetic_record_passes():

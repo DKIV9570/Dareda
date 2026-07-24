@@ -15,7 +15,7 @@
 
 牌编码:雀魂 ``0m/1z/5z`` → mjai ``5mr/E/P``。见 :data:`_Z_MAP`。
 
-正确性不靠肉眼,靠 :mod:`mortal_replay.majsoul.mjai_validate` 把整局喂进
+正确性不靠肉眼,靠 :mod:`dareda.majsoul.mjai_validate` 把整局喂进
 ``PlayerState.update`` —— 任何非法事件当场报错。
 """
 
@@ -97,7 +97,7 @@ def _call_target(seat: int, froms: list[int]) -> tuple[int, int]:
 def convert_hand(hand: Hand, actions: list[tuple[str, dict]]) -> list[dict]:
     """把一个小局(RecordNewRound + 后续动作)转成 mjai 事件列表。
 
-    :param actions: :func:`mortal_replay.verify.split_actions_by_round` 产出的
+    :param actions: :func:`dareda.verify.split_actions_by_round` 产出的
         ``(动作名, 数据体)`` 列表。
     """
     tracker = _HandTracker()

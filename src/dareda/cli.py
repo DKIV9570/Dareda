@@ -1,9 +1,21 @@
-"""命令行入口。
+"""誰だ — 这把怪谁?在原牌山上重打,把"恶调"换成一个名次分布。
 
-    mortal-replay synth  --out record.json     # 造一份合成牌谱
-    mortal-replay verify --record record.json  # §5 配牌恒等断言(准入关卡)
-    mortal-replay inspect --record record.json # 看序列
-    mortal-replay link "https://game.maj-soul.com/1/?paipu=..."  # 解析牌谱链接
+典型流程:
+
+    dareda decode-capture --capture majsoul-ws-*.json --out record.json
+    dareda verify  --record record.json          # 准入关卡:配牌恒等断言,必须全过
+    dareda inspect --record record.json          # 看序列 / 找出你是几号座
+
+分析(--hero 填你的座次):
+
+    dareda self-luck --record record.json --hero 1 --trials 30
+        以你自己的水平重打 N 次 —— 这个名次算运气好还是差(最推荐)
+    dareda replay --record record.json
+        四家全换 Mortal,这副牌顶尖打法能打成什么
+    dareda counterfactual --record record.json --hero 1
+        对手照原样打、只有你换 Mortal(输出带保真度,低保真度的局别当真)
+    dareda montecarlo --record record.json --hero 1 --trials 20 --sensitivity
+        跑成分布,并做对手强度敏感性分析
 """
 
 from __future__ import annotations
@@ -87,7 +99,7 @@ def _cmd_decode_capture(args) -> int:
     Path(args.out).write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
     print(f"\n已写出 {args.out}")
     if report.new_rounds:
-        print(f"下一步: mortal-replay verify --record {args.out}")
+        print(f"下一步: dareda verify --record {args.out}")
     return 0 if report.new_rounds else 1
 
 
@@ -351,7 +363,7 @@ def _force_utf8_stdio() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     _force_utf8_stdio()
-    parser = argparse.ArgumentParser(prog="mortal-replay", description=__doc__)
+    parser = argparse.ArgumentParser(prog="dareda", description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("synth", help="生成合成牌谱")

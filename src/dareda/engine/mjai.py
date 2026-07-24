@@ -4,7 +4,7 @@ mjai 是 stdin/stdout 的 JSON lines 协议:主控每发一个事件对象(一�
 回一行反应。Mortal 部署形态就是这个,四个实例各起一个进程。
 
 这里只封"进程 + 收发 + 生命周期",不含牌局逻辑 —— 牌局逻辑属于 libriichi
-(见 :mod:`mortal_replay.engine.mortal_engine`)。
+(见 :mod:`dareda.engine.mortal_engine`)。
 """
 
 from __future__ import annotations

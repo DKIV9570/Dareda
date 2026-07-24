@@ -9,7 +9,7 @@
   Q 值(近似顺位期望)。按分歧的**代价**加权 —— 近平手上的分歧几乎不计,明显错误
   才计。这是更干净的强度度量,标定应当用它。
 
-做法:用 :class:`~mortal_replay.engine.logfollow.LogFollowEngine` 的测量钩子跑 identity
+做法:用 :class:`~dareda.engine.logfollow.LogFollowEngine` 的测量钩子跑 identity
 replay(四家全照日志打,忠实复现原局)。它借 KyokuReplay 拿到**正确的决策时机**
 (Mortal 在摸牌等使能事件上决策,不是在打牌事件上),每个决策做一次影子评估读出
 Mortal 的选择与 ``q_values``,但仍采用日志动作 —— 牌局按人类原样推进。这比自己
@@ -138,7 +138,7 @@ class SeatStrength:
 def measure_strength(record, human_events_per_hand, mortal_engine, *, seats=range(4)):
     """在整场人类日志上测每家强度。返回 {seat: SeatStrength}。
 
-    :param record: :class:`~mortal_replay.record.GameRecord`,提供每小局牌山。
+    :param record: :class:`~dareda.record.GameRecord`,提供每小局牌山。
     """
     import libriichi
 

@@ -187,7 +187,7 @@ class MortalReplayEngine:
 def to_hand_outcome(outcome, setup: HandSetup) -> HandOutcome:
     """``KyokuOutcome`` → :class:`HandOutcome`。
 
-    分工见 :mod:`mortal_replay.rules`:libriichi 已经把本场棒和立直棒算进 deltas 了
+    分工见 :mod:`dareda.rules`:libriichi 已经把本场棒和立直棒算进 deltas 了
     (它拿到了 honba 和 kyotaku),所以这里**不能**再让 rules.settle 叠一次。
     把结果原样交出去,并把 riichi_declarations 留空 —— 立直扣分同样已含在内。
     """

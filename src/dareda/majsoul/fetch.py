@@ -37,7 +37,7 @@ class PaipuRef:
     **不是 account_id。** 实测(250101-1a2b3c4d… 这局)链接里的 12345678 与牌谱
     ``head.accounts`` 里的四个 account_id 都对不上,也不是简单的异或/偏移 ——
     雀魂对它做了混淆。想知道"我是哪个座",请直接用真实 account_id 配
-    :func:`mortal_replay.majsoul.parse.seat_of_account`,或者按昵称/点数认。
+    :func:`dareda.majsoul.parse.seat_of_account`,或者按昵称/点数认。
     """
 
     def __str__(self) -> str:
@@ -86,7 +86,7 @@ class MajsoulApiFetcher:
     2. websocket 连大厅,登录(账号密码或 access token),拿 session
     3. ``fetchGameRecord(game_uuid=...)`` → 拿到 ``GameDetailRecords``
     4. 解 wrapper,逐条还原动作,筛 ``RecordNewRound`` 交给
-       :func:`mortal_replay.majsoul.parse.parse_record`
+       :func:`dareda.majsoul.parse.parse_record`
 
     注意:登录态属于账号操作,频繁拉取有风控风险;实现时务必带本地缓存,
     同一 uuid 只拉一次。

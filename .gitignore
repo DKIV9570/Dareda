@@ -12,6 +12,7 @@ replay_result*.json
 # 开发过程的设计文档与实测记录(含具体牌谱的数字),不对外
 DESIGN.md
 mortal-replay-spec.md
+dareda-spec.md
 
 # Rust
 target/

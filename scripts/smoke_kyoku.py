@@ -17,8 +17,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from mortal_replay.deal import split_wall  # noqa: E402
-from mortal_replay.majsoul.parse import parse_record  # noqa: E402
+from dareda.deal import split_wall  # noqa: E402
+from dareda.majsoul.parse import parse_record  # noqa: E402
 
 import libriichi  # noqa: E402
 

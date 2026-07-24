@@ -3,11 +3,11 @@
 **它能验什么、不能验什么**(重要,别把绿灯当成对):
 
 * 能验:发牌的索引算术、赤宝编解码往返、庄位推导、序列驱动、CLI 端到端。
-  这里的发牌是**逐张游标**写的,和 :mod:`mortal_replay.deal` 的切片实现是两条
+  这里的发牌是**逐张游标**写的,和 :mod:`dareda.deal` 的切片实现是两条
   独立代码路径,off-by-one 类的错会被撞出来。
 * **不能验**:牌山约定本身(``paishan[0:52]`` 是不是配牌、王牌在头还是尾)。
   合成数据是按我们**假设**的约定造的,自证不了假设。这一条只能拿一份真牌谱过
-  :func:`mortal_replay.verify.infer_convention`。在那之前,§5 的"绿"只代表自洽。
+  :func:`dareda.verify.infer_convention`。在那之前,§5 的"绿"只代表自洽。
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ def full_wall_codes(*, red_fives: bool = True) -> list[str]:
 
 
 def _deal_by_cursor(wall: list[str], oya: int) -> list[list[str]]:
-    """逐张发牌 —— 刻意不复用 :func:`mortal_replay.deal.deal` 的切片写法。"""
+    """逐张发牌 —— 刻意不复用 :func:`dareda.deal.deal` 的切片写法。"""
     hands: list[list[str]] = [[] for _ in range(4)]
     cursor = 0
     order = seat_order(oya)
@@ -76,7 +76,7 @@ def synth_record(
     k: int = 10,
     honba_at: set[int] | None = None,
 ) -> dict:
-    """生成一份归一化 JSON 牌谱,可直接喂 :func:`mortal_replay.majsoul.parse.parse_record`。"""
+    """生成一份归一化 JSON 牌谱,可直接喂 :func:`dareda.majsoul.parse.parse_record`。"""
     rng = random.Random(seed)
     sequence = make_sequence(k, honba_at=honba_at if honba_at is not None else {1, 7})
 

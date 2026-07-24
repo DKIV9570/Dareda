@@ -71,7 +71,7 @@ def to_dict(msg) -> dict:
     """protobuf → dict,保留原字段名。
 
     默认值字段会被省略(``ju: 0`` 直接不存在)—— 这正是 protobuf-JSON 的语义,
-    也是 :func:`mortal_replay.majsoul.parse.parse_downloadlogs` 已经在容忍的行为。
+    也是 :func:`dareda.majsoul.parse.parse_downloadlogs` 已经在容忍的行为。
     """
     from google.protobuf.json_format import MessageToDict
 

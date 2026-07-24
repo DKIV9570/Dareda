@@ -1,8 +1,8 @@
-from mortal_replay.driver import StopReason, comparison_table, run_replay
-from mortal_replay.engine.base import ScriptedEngine
-from mortal_replay.majsoul.parse import parse_record
-from mortal_replay.majsoul.synth import synth_record
-from mortal_replay.rules import HandOutcome, Outcome
+from dareda.driver import StopReason, comparison_table, run_replay
+from dareda.engine.base import ScriptedEngine
+from dareda.majsoul.parse import parse_record
+from dareda.majsoul.synth import synth_record
+from dareda.rules import HandOutcome, Outcome
 
 DRAW = HandOutcome(Outcome.RYUUKYOKU, (0, 0, 0, 0))
 

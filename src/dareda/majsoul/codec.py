@@ -66,6 +66,6 @@ def parse_tile_list(codes: list[str]) -> list[int]:
 
     注意:这里的 copy 号是**独立分配**的,与牌山里同一张牌的 copy 号不保证一致。
     所以配牌恒等断言(spec §5)必须按 *kind + 赤* 比较,不能按 tile id 比较 ——
-    见 :func:`mortal_replay.verify.compare_haipai`。
+    见 :func:`dareda.verify.compare_haipai`。
     """
     return parse_paishan("".join(codes), expect=None)

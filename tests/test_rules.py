@@ -1,4 +1,4 @@
-from mortal_replay.rules import (
+from dareda.rules import (
     HandOutcome,
     Outcome,
     TableState,

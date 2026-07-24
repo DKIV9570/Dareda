@@ -1,9 +1,13 @@
-# mortal-replay
+# 誰だ / dareda
 
-**在你那局的原牌山上重打一遍,回答"这把到底是我打得烂,还是运气差"。**
+### 这把怪谁?
+
+摔完牌之后的那句吐槽,现在能算了。
 
 雀魂的牌谱里存着**完整牌山**。把它取出来注入麻将引擎,就能在**一模一样的发牌**下
-反复重放 —— 于是"牌"和"打法"这两个混在一起的东西,可以被分开量化。
+反复重放几十遍 —— 于是"牌"和"打法"这两个搅在一起的东西,可以被分开量化。
+
+**它不告诉你"是恶调",它告诉你一个分布。**
 
 ```
 座1 同水平自打分布  n=30  平均顺位 2.00
@@ -47,7 +51,7 @@
 
 ```bash
 # 1. 本项目
-git clone <this-repo> mortal-replay && cd mortal-replay
+git clone <this-repo> dareda && cd dareda
 pip install -e .
 
 # 2. Mortal / libriichi(上游,AGPL-3.0)+ 本项目的补丁
@@ -88,8 +92,8 @@ python -c "import libriichi; print(libriichi.__profile__)"   # 应输出 release
 4. 解码:
 
 ```bash
-mortal-replay decode-capture --capture majsoul-ws-*.json --out record.json
-mortal-replay verify --record record.json      # 自检:配牌恒等断言,必须全过
+dareda decode-capture --capture majsoul-ws-*.json --out record.json
+dareda verify --record record.json      # 自检:配牌恒等断言,必须全过
 ```
 
 `verify` 全过才说明牌山取对了,后面的分析才有意义。排错见 [tools/README.md](tools/README.md)。
@@ -102,23 +106,23 @@ mortal-replay verify --record record.json      # 自检:配牌恒等断言,必�
 **不是** account_id,认不出座位):
 
 ```bash
-mortal-replay inspect --record record.json
+dareda inspect --record record.json
 ```
 
 然后:
 
 ```bash
 # 推荐:以你自己的水平重打 30 次,看你这个名次是运气好还是差
-mortal-replay self-luck --record record.json --hero 1 --trials 30
+dareda self-luck --record record.json --hero 1 --trials 30
 
 # 四家全换顶尖 AI
-mortal-replay replay --record record.json
+dareda replay --record record.json
 
 # 对手照原样打,只有你换 AI(输出带保真度,低保真度的局别当真)
-mortal-replay counterfactual --record record.json --hero 1
+dareda counterfactual --record record.json --hero 1
 
 # 分布 + 对手强度敏感性
-mortal-replay montecarlo --record record.json --hero 1 --trials 20 --sensitivity
+dareda montecarlo --record record.json --hero 1 --trials 20 --sensitivity
 ```
 
 CPU 上一条轨迹约 7 秒,所以 `--trials 30` 要跑 3-4 分钟。有 CUDA 的话加 `--device cuda:0`。

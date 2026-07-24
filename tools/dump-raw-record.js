@@ -9,13 +9,13 @@
 //   2. F12 打开开发者工具 → Console
 //   3. 把本文件全文粘进去,回车
 //   4. 浏览器会下载 <uuid>.json
-//   5. mortal-replay verify --record <uuid>.json
+//   5. dareda verify --record <uuid>.json
 //
 // 相比 downloadlogs 脚本的好处:只做"拉原始 record + 存文件"两件事,
 // 不碰 cfg.fan / cfg.level_definition / cfg.item_definition 那些客户端配置表 ——
 // 那里是 downloadlogs 在非日服客户端上最容易静默抛异常的地方。
 //
-// 输出格式与 downloadlogs(VERBOSELOG=true)一致,mortal_replay 的解析器直接认。
+// 输出格式与 downloadlogs(VERBOSELOG=true)一致,dareda 的解析器直接认。
 
 (async () => {
     // 0. 找到游戏所在的 frame。
@@ -129,7 +129,7 @@
         const rounds = mjslog.filter((e) => e && e.paishan).length;
         console.log(`[dump] 动作 ${mjslog.length} 条,其中带 paishan 的小局 ${rounds} 个`);
         if (!rounds) {
-            console.warn("[dump] 一个 paishan 都没有 —— 这份数据对 mortal-replay 没用,请把上面的日志发出来");
+            console.warn("[dump] 一个 paishan 都没有 —— 这份数据对 dareda 没用,请把上面的日志发出来");
         }
 
         // 4. 存文件。用 Blob 而不是 data: URI,后者在大牌谱上会超长度限制。

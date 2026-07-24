@@ -8,7 +8,7 @@
 
 import pytest
 
-from mortal_replay.majsoul.mjai_convert import (
+from dareda.majsoul.mjai_convert import (
     ConvertError,
     _kakan_consumed,
     id_to_mjai_tile,
@@ -58,9 +58,9 @@ def test_rejects_bad_tile():
 
 def test_start_kyoku_puts_13_tiles_and_first_tsumo():
     """庄家 14 张里,起手 tehais 只放 13,第 14 张作为首个 tsumo 事件。"""
-    from mortal_replay.majsoul.mjai_convert import convert_hand
-    from mortal_replay.majsoul.parse import parse_record
-    from mortal_replay.majsoul.synth import synth_record
+    from dareda.majsoul.mjai_convert import convert_hand
+    from dareda.majsoul.parse import parse_record
+    from dareda.majsoul.synth import synth_record
 
     rec = parse_record(synth_record(seed=3, k=1))
     hand = rec.hands[0]

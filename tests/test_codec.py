@@ -1,8 +1,8 @@
 import pytest
 
-from mortal_replay.majsoul.codec import format_paishan, parse_paishan
-from mortal_replay.majsoul.synth import full_wall_codes
-from mortal_replay.tiles import RED_IDS, TileError, is_red, tile_to_code
+from dareda.majsoul.codec import format_paishan, parse_paishan
+from dareda.majsoul.synth import full_wall_codes
+from dareda.tiles import RED_IDS, TileError, is_red, tile_to_code
 
 
 def test_full_wall_roundtrip():

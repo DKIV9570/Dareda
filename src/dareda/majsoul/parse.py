@@ -162,7 +162,7 @@ def seat_of_account(record: GameRecord, account_id: int) -> int | None:
     §6 需要知道"吃四的是哪个座",不然对照表看不出重点。
 
     注意:**不要**把牌谱链接 ``_a`` 后面那个数传进来 —— 那是混淆过的分享码,
-    和 account_id 对不上,见 :class:`mortal_replay.majsoul.fetch.PaipuRef`。
+    和 account_id 对不上,见 :class:`dareda.majsoul.fetch.PaipuRef`。
     真实 account_id 可以从 ``head.accounts`` 里按昵称找。
     """
     head = record.meta.get("head") or {}
