@@ -29,36 +29,46 @@
 
 ## 装
 
-需要 Python 3.11+ 和 Rust 工具链。**Windows 用户请放在短路径**(如 `C:\dev\dareda`),
-别放很深的目录,否则装 torch 会失败(原因见文末排错)。
+先自己装好 **Python 3.11+** 和 **Rust 工具链**(https://rustup.rs)。**Windows 用户请把项目
+放在短路径**(如 `C:\dev\dareda`),别放很深的目录,否则装 torch 会失败(见文末排错)。
+
+然后跑一键安装脚本,它会建虚拟环境、装依赖、编译引擎、下模型权重:
 
 ```bash
-# 1. 本项目(务必用虚拟环境,避免影响你其它的 Python 项目)
 git clone https://github.com/DKIV9570/Dareda.git dareda && cd dareda
-python -m venv .venv && .venv\Scripts\activate      # Linux/macOS: source .venv/bin/activate
+
+# Windows(PowerShell):
+.\install.ps1
+
+# Linux / macOS:
+bash install.sh
+```
+
+脚本可以重复跑——中途出错(比如忘了装 Rust)修好再跑一遍,它会跳过已完成的步骤,
+不会重下权重或重新编译。装完照它最后打印的提示激活环境即可。
+
+<details>
+<summary>不想用脚本?手动装的步骤在这里</summary>
+
+```bash
+python -m venv .venv && .venv\Scripts\activate       # Linux/macOS: source .venv/bin/activate
 pip install -e .
+pip install numpy torch --index-url https://download.pytorch.org/whl/cpu   # 只用 CPU;要 GPU 去 pytorch.org 选命令
 
-# 2. PyTorch(去 https://pytorch.org 选对应你显卡的命令;只用 CPU 就用下面这条)
-pip install numpy torch --index-url https://download.pytorch.org/whl/cpu
-
-# 3. 麻将引擎 libriichi(上游 Mortal)+ 本项目补丁
 git clone --depth 1 https://github.com/Equim-chan/Mortal.git vendor/Mortal
 cp patches/replay.rs vendor/Mortal/libriichi/src/arena/replay.rs
 git -C vendor/Mortal apply ../../patches/arena-mod.patch
-
-# 4. 编译
 cd vendor/Mortal/libriichi && cargo build --release && cd ../../..
 
-# 5. 把编译产物放到能 import 的地方(注意文件名要改成 libriichi)
-cp vendor/Mortal/target/release/riichi.dll  libriichi.pyd    # Windows
-# cp vendor/Mortal/target/release/libriichi.so libriichi.so  # Linux/macOS
+cp vendor/Mortal/target/release/riichi.dll  libriichi.pyd     # Windows
+# cp vendor/Mortal/target/release/libriichi.so libriichi.so   # Linux/macOS
 
-# 6. 下模型权重
 mkdir -p models && curl -L -o models/mortal_298k.pth \
   https://huggingface.co/VoidShine/mortal-298k/resolve/main/mortal_298k.pth
 ```
+</details>
 
-设置 PYTHONPATH,然后确认引擎能导入:
+每次开新终端用之前,激活环境并设好 `PYTHONPATH`:
 
 ```bash
 export PYTHONPATH="src:vendor/Mortal/mortal:."      # Windows 用分号: "src;vendor/Mortal/mortal;."
