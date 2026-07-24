@@ -84,6 +84,8 @@ pip install -e .
 pip install numpy torch --index-url https://download.pytorch.org/whl/cpu
 
 # 3. Mortal / libriichi(上游,AGPL-3.0)+ 本项目的补丁
+#    ⚠ 这一步会在项目里放进**第二个 git 仓库**(origin 指向 Equim 的 GitHub)。
+#      .gitignore 只能让本仓库不追踪它,管不住 IDE —— 见下面「小心提交错仓库」。
 git clone --depth 1 https://github.com/Equim-chan/Mortal.git vendor/Mortal
 cp patches/replay.rs vendor/Mortal/libriichi/src/arena/replay.rs
 git -C vendor/Mortal apply ../../patches/arena-mod.patch
@@ -106,6 +108,23 @@ cp vendor/Mortal/target/release/riichi.dll  libriichi.pyd   # Windows
 # 6. 权重(本项目不分发,自行获取)
 mkdir -p models && curl -L -o models/mortal_298k.pth \
   https://huggingface.co/VoidShine/mortal-298k/resolve/main/mortal_298k.pth
+```
+
+### ⚠ 小心提交错仓库
+
+`vendor/Mortal` 是**上游 Equim 的仓库克隆**,`origin` 指向他的 GitHub。你按第 3 步打完
+补丁后,那个克隆里就有了未提交的改动 —— 而 **VSCode 会把它和本项目并排列在 Source
+Control 面板里**,很容易点错,把补丁提交进上游克隆(然后面板一直提示"领先 1 个提交,
+要推送吗")。
+
+`.gitignore` 里的 `vendor/` 只能让**本仓库**不追踪它,**挡不住 IDE**。
+
+本项目已附 [.vscode/settings.json](.vscode/settings.json) 关掉子目录仓库扫描。如果你用别的
+编辑器,注意认准仓库再提交。真提交进去了也不要紧(你没有上游的写权限,推不上去),
+撤销即可:
+
+```bash
+git -C vendor/Mortal reset --mixed HEAD~1   # 撤销提交,保留补丁改动(不影响编译)
 ```
 
 ### Windows 用户:请把项目放在**短路径**下

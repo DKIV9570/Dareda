@@ -1,0 +1,11 @@
+{
+  // 安装说明会把上游 Mortal clone 到 vendor/Mortal —— 那是**另一个 git 仓库**,
+  // 且 origin 指向 Equim 的 GitHub。.gitignore 只能让本仓库不追踪它,管不住 IDE:
+  // VSCode 默认会扫描子目录里的 git 仓库,把它并排列进 Source Control 面板,
+  // 很容易在打完补丁后误把改动提交到上游克隆里去。
+  // 关掉子目录扫描,面板里就只剩本仓库。
+  "git.autoRepositoryDetection": "openEditors",
+
+  // 双保险:即便被检测到也不显示
+  "git.ignoredRepositories": ["vendor/Mortal"]
+}
