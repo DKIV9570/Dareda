@@ -246,6 +246,82 @@ def _cmd_montecarlo(args) -> int:
     return 0
 
 
+def _cmd_diagnose(args) -> int:
+    """一条命令给出「这把怪谁」:牌 / 打法 / 运气 各占多少。"""
+    import sys as _sys
+
+    from .analysis.calibrate import calibrate
+    from .analysis.diagnose import Diagnosis
+    from .analysis.strength import measure_strength, render_strength
+    from .engine.mortal_engine import EngineUnavailable, load_weights
+    from .majsoul.mjai_convert import convert_hand
+    from .montecarlo import SelfStrengthMonteCarlo
+    from .rules import placements
+    from .verify import split_actions_by_round
+
+    raw = json.loads(Path(args.record).read_text(encoding="utf-8"))
+    if not (isinstance(raw, dict) and raw.get("mjslog")):
+        print("需要含动作流的牌谱(抓包解出来的)。")
+        return 1
+    record = load_record(args.record)
+    actions = split_actions_by_round(raw)
+    humans = [convert_hand(h, a) for h, a in zip(record.hands, actions)]
+
+    if args.mortal_src:
+        _sys.path.insert(0, args.mortal_src)
+    try:
+        weights = load_weights(args.model, device=args.device, mortal_src=args.mortal_src)
+    except EngineUnavailable as exc:
+        print(f"引擎不可用:\n{exc}")
+        return 1
+
+    names = record.player_names or ("",) * 4
+    print(f"牌谱 {record.source}  hero=座{args.hero}"
+          + (f"({names[args.hero]})" if names[args.hero] else ""))
+
+    print("\n[1/3] 测四家强度...", flush=True)
+    strengths = measure_strength(record, humans, weights.make_engine())
+    print(render_strength(strengths, record.player_names))
+
+    seat_params = {s: calibrate(strengths[s].q_samples, strengths[s].ev_loss) for s in range(4)}
+
+    # 均等基线:四家统一用"这桌平均水平",座位差异只剩牌与座次
+    avg_ev = sum(strengths[s].ev_loss for s in range(4)) / 4
+    ref = calibrate(strengths[args.hero].q_samples, avg_ev)
+    equal_params = {s: ref for s in range(4)}
+
+    def prog(tag):
+        def f(i, total, res):
+            print(f"\r  {tag} {i}/{total}", end="", flush=True)
+        return f
+
+    print(f"\n[2/3] 均等水平基线({args.trials} 次)—— 这副牌本身值几位", flush=True)
+    deal_dist = SelfStrengthMonteCarlo(
+        record, equal_params, weights, base_seed=args.seed
+    ).run_all(args.trials, progress=prog("基线"))[args.hero]
+    print()
+
+    print(f"[3/3] 真实水平({args.trials} 次)—— 加上各家实际打法", flush=True)
+    self_dist = SelfStrengthMonteCarlo(
+        record, seat_params, weights, base_seed=args.seed
+    ).run_all(args.trials, progress=prog("真实"))[args.hero]
+    print()
+
+    dx = Diagnosis(
+        hero=args.hero,
+        actual=placements(record.final_scores)[args.hero],
+        deal_ev=deal_dist.avg_placement,
+        self_ev=self_dist.avg_placement,
+        deal_trials=deal_dist.n,
+        self_trials=self_dist.n,
+    )
+    print()
+    print(dx.render(names[args.hero]))
+    if dx.check_closure() > 1e-6:
+        print("\n  ! 分解未闭合,数字有问题,请报 issue")
+    return 0
+
+
 def _cmd_selfluck(args) -> int:
     import sys as _sys
 
@@ -412,6 +488,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--device", default="cpu")
     p.add_argument("--mortal-src")
     p.set_defaults(func=_cmd_montecarlo)
+
+    p = sub.add_parser("diagnose", help="一条命令:这把怪谁(牌/打法/运气 各占多少)")
+    p.add_argument("--record", required=True, help="含动作流的牌谱")
+    p.add_argument("--hero", type=int, required=True)
+    p.add_argument("--trials", type=int, default=20, help="每条基线各跑多少次(共两条)")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--model", default="models/mortal_298k.pth")
+    p.add_argument("--device", default="cpu")
+    p.add_argument("--mortal-src")
+    p.set_defaults(func=_cmd_diagnose)
 
     p = sub.add_parser("self-luck", help="全员按各自水平重打,看这局对你是运气好/差")
     p.add_argument("--record", required=True, help="含动作流的牌谱")

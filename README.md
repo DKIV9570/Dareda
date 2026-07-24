@@ -105,7 +105,10 @@ dareda inspect --record record.json
 然后挑一个跑(`--hero` 填你的座次 0–3):
 
 ```bash
-# 推荐:以你自己的水平重打 30 次,看这个名次是运气好还是差
+# 最推荐:一条命令给结论 —— 牌、打法、运气各占多少锅
+dareda diagnose --record record.json --hero 1
+
+# 只想看运气:以你自己的水平重打 30 次
 dareda self-luck --record record.json --hero 1 --trials 30
 
 # 四家都换成顶尖 AI,看这副牌能打成什么样
@@ -118,7 +121,25 @@ dareda counterfactual --record record.json --hero 1
 dareda montecarlo --record record.json --hero 1 --trials 20 --sensitivity
 ```
 
-CPU 上一条轨迹约 7 秒,`--trials 30` 要跑三四分钟。有显卡加 `--device cuda:0` 快很多。
+CPU 上一条轨迹约 7 秒。`self-luck --trials 30` 要三四分钟;`diagnose` 要跑两条基线
+(均等水平 + 真实水平),默认 `--trials 20` 约十分钟。有显卡加 `--device cuda:0` 快很多。
+
+### `diagnose` 输出长这样
+
+```
+  牌   ★★★★☆  好牌     均等水平下,这个座位期望 2.31 位
+  打   ★★★☆☆  打得一般  你的打法把期望推到 2.20 位(+0.11)
+  运   ☆☆☆☆☆  运气背    实际 4 位,比期望差 1.80 位
+
+  → 好牌,打得一般,而且这把运气还背。
+
+  名次分解(以 2.5 位为中性起点,正数=对你有利):
+    牌与座次 +0.19  +  打法 +0.11  +  运气 -1.80  =  -1.50
+```
+
+三项相加恒等于「实际名次距中性的偏差」,是闭合分解不是拍脑袋的权重。之所以要跑
+两条基线:`self-luck` 那个期望值里其实**同时含了牌和你的打法**,只有再跑一条四家
+均等水平的基线,才能把"牌值几位"和"你的打法赚了几位"分开。
 
 ## 结果别读歪了
 
@@ -138,7 +159,8 @@ CPU 上一条轨迹约 7 秒,`--trials 30` 要跑三四分钟。有显卡加 `--
 | `decode-capture` | 抓包文件 → 牌谱 |
 | `verify` | 检查牌山取对没有(分析前必跑) |
 | `inspect` | 看这局的序列、玩家、终局 |
-| `self-luck` | 以你自己的水平重打,看运气好坏 ← 最常用 |
+| `diagnose` | 牌 / 打法 / 运气各占多少锅 ← **先跑这个** |
+| `self-luck` | 以你自己的水平重打,看运气好坏 |
 | `replay` | 四家全换顶尖 AI |
 | `counterfactual` | 只有你换 AI,对手照原样打 |
 | `montecarlo` | 跑成分布 + 对手强度敏感性 |
