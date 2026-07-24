@@ -125,6 +125,9 @@ ERROR: Could not install packages due to an OSError:
 莫名其妙的 `ModuleNotFoundError: No module named 'torchgen'` —— 和真正的原因毫无关系,
 而且这个残骸连 `pip uninstall` 都卸不掉(没有 RECORD 文件)。
 
+实测对照:同一条命令、同一个 `torch 2.13.0+cpu`,在 113 字符的深目录下安装失败,
+换到 `C:\t_dv`(6 字符)后一次装成。**所以这不是 torch 或命令的问题,就是路径长度。**
+
 遇到这个情况:**删掉整个 `.venv` 重来**,并换到短路径。或者开启 Windows 长路径支持:
 
 ```powershell
