@@ -49,26 +49,61 @@
 
 需要 Python 3.11+、Rust 工具链、约 130 MB 磁盘放权重。
 
+> ### ⚠ 请务必装在虚拟环境里
+>
+> **本项目会动 `protobuf` 的版本。** 依赖声明是 `protobuf>=4.25`,所以在一个已有的
+> 环境里 `pip install` 时,如果你原本的 protobuf 低于 4.25,pip 会**把它升上去** ——
+> 这可能弄坏你环境里依赖老 protobuf 的其它包(常见的有 `googleapis-common-protos`、
+> `google-api-core`、`proto-plus`、`wandb`、`paddlepaddle`,它们不少要求 `protobuf<7`)。
+>
+> 装进 venv 就完全不会波及你的其它项目:
+>
+> ```bash
+> python -m venv .venv
+> .venv/Scripts/activate      # Windows
+> # source .venv/bin/activate # Linux/macOS
+> ```
+>
+> 关于 protobuf 兼容性,本项目已在 **4.25.9 和 7.35.1 上实测通过**。之所以能跨这么大
+> 版本,是因为 liqi schema 用的是**描述符集**(`liqi.desc`)而不是 `protoc` 生成的
+> `*_pb2.py` —— 后者带运行时版本断言,会把你钉死在某个 protobuf 大版本上。
+>
+> **另外:不要装 `pip install -e ".[proto]"`,除非你要重新编译 schema。** 那个 extra
+> 会拉 `grpcio-tools`,它会把 protobuf 顶到 7.x —— 正是上面说的破坏来源。日常使用
+> 完全用不到它(`liqi.desc` 已随包提供)。
+
 ```bash
 # 1. 本项目
-git clone <this-repo> dareda && cd dareda
+git clone https://github.com/DKIV9570/Dareda.git dareda && cd dareda
+python -m venv .venv && .venv/Scripts/activate    # ← 见上面的警告
 pip install -e .
 
-# 2. Mortal / libriichi(上游,AGPL-3.0)+ 本项目的补丁
+# 2. 分析功能需要 PyTorch + numpy(本项目**不**自动装 —— torch 要按你的
+#    CUDA/CPU 情况选对应版本,装错了跑不动)。去 https://pytorch.org 拿命令,
+#    或者只用 CPU 的话:
+pip install numpy torch --index-url https://download.pytorch.org/whl/cpu
+
+# 3. Mortal / libriichi(上游,AGPL-3.0)+ 本项目的补丁
 git clone --depth 1 https://github.com/Equim-chan/Mortal.git vendor/Mortal
 cp patches/replay.rs vendor/Mortal/libriichi/src/arena/replay.rs
 git -C vendor/Mortal apply ../../patches/arena-mod.patch
+#    补丁只是往 arena/mod.rs 加 4 行注册。上游哪天改了那个文件导致 apply 失败,
+#    手动加也一样(见 patches/arena-mod.patch 的内容):
+#      mod replay;
+#      pub use replay::{KyokuOutcome, KyokuReplay};
+#      m.add_class::<KyokuReplay>()?;
+#      m.add_class::<KyokuOutcome>()?;
 
-# 3. 编译扩展
+# 4. 编译扩展
 cd vendor/Mortal/libriichi && cargo build --release && cd ../../..
 
-# 4. 放到 Python 能 import 的地方。注意改名!
+# 5. 放到 Python 能 import 的地方。注意改名!
 #    模块入口是 PyInit_libriichi,但 crate 产物叫 riichi —— 不改名会报
 #    "dynamic module does not define module export function"
 cp vendor/Mortal/target/release/riichi.dll  libriichi.pyd   # Windows
 # cp vendor/Mortal/target/release/libriichi.so libriichi.so # Linux/macOS
 
-# 5. 权重(本项目不分发,自行获取)
+# 6. 权重(本项目不分发,自行获取)
 mkdir -p models && curl -L -o models/mortal_298k.pth \
   https://huggingface.co/VoidShine/mortal-298k/resolve/main/mortal_298k.pth
 ```
