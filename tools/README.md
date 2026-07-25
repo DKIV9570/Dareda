@@ -20,10 +20,10 @@ Unity WebGL 开不了原始 socket,网络必须借道浏览器 API。所以在 J
 
 1. 装 [Tampermonkey](https://www.tampermonkey.net/),把本文件粘进去,确认已启用
 2. **刷新雀魂页面** —— 必须刷新,`@run-at document-start` 要早于游戏建连
-3. 登录 → 点开牌谱 → 等回放界面出来 → 按 <kbd>D</kbd>
+3. 登录 → 点开牌谱 → 等回放界面出来 → 点右下角「⬇ 导出牌谱」按钮
 4. `dareda decode-capture --capture majsoul-ws-*.json --out record.json`
 
-控制台会实时打印录到多少帧。按 D 没动静的话,在控制台执行 `__mjsCapture.dump()`。
+控制台会实时打印录到多少帧。按钮没反应的话,在控制台执行 `__mjsCapture.dump()`。
 
 **排错**
 

@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         majsoul-ws-capture
 // @namespace    dareda
-// @version      0.2.0
+// @version      0.3.0
 // @description  录下雀魂客户端的 WebSocket 原始帧,用于离线提取牌谱牌山
-// @include      https://game.maj-soul.com/*
-// @include      https://www.maj-soul.com/*
-// @include      https://game.mahjongsoul.com/*
-// @include      https://mahjongsoul.game.yo-star.com/*
-// @include      https://majsoul.union-game.com/*
+// @match        https://game.maj-soul.com/*
+// @match        https://www.maj-soul.com/*
+// @match        https://game.mahjongsoul.com/*
+// @match        https://mahjongsoul.game.yo-star.com/*
+// @match        https://majsoul.union-game.com/*
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
@@ -29,14 +29,16 @@
 //   1. 装进 Tampermonkey,确认已启用
 //   2. 刷新雀魂页面(必须刷新!脚本要在建连前生效)
 //   3. 登录 → 点开要导出的牌谱 → 等回放界面出来
-//   4. 按 D 下载 majsoul-ws-<时间戳>.json(过滤到位的话应当远小于 1 MB)
+//   4. 点右下角的「⬇ 导出牌谱」按钮下载 majsoul-ws-<时间戳>.json(远小于 1 MB)
 //   5. dareda decode-capture --capture majsoul-ws-*.json --out record.json
 //   6. dareda verify --record record.json
+//
+// 只在雀魂域名生效(@match 精确匹配),不会碰别的网站。导出用悬浮按钮,不再绑热键
+// —— 避免在输入框打字或随手按键时误触下载(0.2.0 用裸 D 键会误触)。
 
 (function () {
     "use strict";
 
-    const DOWNLOAD_KEY = 68;              // D
     const MAX_TOTAL_BYTES = 128 * 1024 * 1024;
 
     // HTTP 侧的过滤。
@@ -78,7 +80,7 @@
         if (!buf || !buf.byteLength) return;
         if (totalBytes + buf.byteLength > MAX_TOTAL_BYTES) {
             dropped++;
-            if (dropped === 1) log("已达内存上限,后续帧丢弃。请先按 D 存盘");
+            if (dropped === 1) log("已达内存上限,后续帧丢弃。请先点「导出牌谱」存盘");
             return;
         }
         totalBytes += buf.byteLength;
@@ -196,9 +198,27 @@
 
     window.__mjsCapture = { frames: frames, dump: dump };
 
-    document.addEventListener("keydown", function (e) {
-        if (e.keyCode === DOWNLOAD_KEY || e.key === "d" || e.key === "D") dump();
-    }, true);
+    // 悬浮按钮:点了才下载,永远不会误触(不再绑热键)。
+    // 脚本在 document-start 跑,body 可能还没有,等 DOM 就绪再插按钮。
+    function addButton() {
+        if (document.getElementById("mjs-cap-btn")) return;
+        const btn = document.createElement("button");
+        btn.id = "mjs-cap-btn";
+        btn.textContent = "⬇ 导出牌谱";
+        btn.style.cssText = [
+            "position:fixed", "right:14px", "bottom:14px", "z-index:2147483647",
+            "padding:8px 14px", "font:14px/1.2 sans-serif", "color:#fff",
+            "background:#3987e5", "border:none", "border-radius:8px",
+            "cursor:pointer", "opacity:0.55", "box-shadow:0 2px 8px rgba(0,0,0,.4)",
+            "transition:opacity .15s",
+        ].join(";");
+        btn.addEventListener("mouseenter", () => (btn.style.opacity = "1"));
+        btn.addEventListener("mouseleave", () => (btn.style.opacity = "0.55"));
+        btn.addEventListener("click", dump);
+        document.body.appendChild(btn);
+    }
+    if (document.body) addButton();
+    else document.addEventListener("DOMContentLoaded", addButton);
 
-    log("已挂钩 WebSocket / fetch / XHR。点开牌谱后按 D 存盘(或控制台执行 __mjsCapture.dump())");
+    log("已挂钩 WebSocket / fetch / XHR。点开牌谱后点右下角「导出牌谱」按钮(或控制台执行 __mjsCapture.dump())");
 })();

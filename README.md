@@ -83,8 +83,8 @@ python -c "import libriichi; print(libriichi.__profile__)"   # 输出 release �
 1. 装 [Tampermonkey](https://www.tampermonkey.net/),把
    [tools/majsoul-ws-capture.user.js](tools/majsoul-ws-capture.user.js) 全文粘进去并启用。
 2. **刷新雀魂页面**(脚本要在开局前就生效,不刷新没用)。
-3. 登录 → 点开要分析的牌谱 → 等回放界面出来 → 按 <kbd>D</kbd>,浏览器会下一个
-   `majsoul-ws-*.json`。
+3. 登录 → 点开要分析的牌谱 → 等回放界面出来 → 点右下角的「⬇ 导出牌谱」按钮,
+   浏览器会下一个 `majsoul-ws-*.json`。
 4. 解码并自检:
 
 ```bash
