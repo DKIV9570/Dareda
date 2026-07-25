@@ -53,6 +53,8 @@ class Diagnosis:
     """真实水平下(self-luck)的期望名次。"""
     deal_trials: int = 0
     self_trials: int = 0
+    strengths: object = None
+    """四家强度({seat: SeatStrength}),供展示;分解本身不用它。"""
 
     # ---- 三项贡献(统一成"正数=对你有利") ----
     @property
@@ -146,3 +148,61 @@ class Diagnosis:
                 f"    (均等基线 {self.deal_trials} 次 / 真实水平 {self.self_trials} 次蒙特卡洛)"
             )
         return "\n".join(lines)
+
+
+def run_diagnose(
+    record,
+    humans,
+    hero: int,
+    weights,
+    *,
+    trials: int = 20,
+    jobs=None,
+    base_seed: int = 0,
+    progress=None,
+) -> "Diagnosis":
+    """完整跑一次诊断,返回 :class:`Diagnosis`。CLI 与 GUI 共用这一套编排。
+
+    分三步:测四家强度 → 均等水平基线蒙特卡洛 → 真实水平蒙特卡洛。
+
+    :param progress: 可选回调 ``(phase, done, total)``,phase ∈
+        ``{"strength", "baseline", "real"}``。strength 阶段 total 未知,done=total=0。
+    """
+    from .calibrate import calibrate
+    from .strength import measure_strength
+    from ..montecarlo import SelfStrengthMonteCarlo, resolve_jobs
+    from ..rules import placements
+
+    jobs = resolve_jobs(jobs, trials)
+
+    if progress:
+        progress("strength", 0, 0)
+    strengths = measure_strength(record, humans, weights.make_engine())
+    seat_params = {s: calibrate(strengths[s].q_samples, strengths[s].ev_loss) for s in range(4)}
+
+    # 均等基线:四家统一用"这桌平均水平",座位差异只剩牌与座次
+    avg_ev = sum(strengths[s].ev_loss for s in range(4)) / 4
+    ref = calibrate(strengths[hero].q_samples, avg_ev)
+    equal_params = {s: ref for s in range(4)}
+
+    def _cb(phase):
+        return (lambda i, total, res: progress(phase, i, total)) if progress else None
+
+    deal_dist = SelfStrengthMonteCarlo(
+        record, equal_params, weights, base_seed=base_seed
+    ).run_all(trials, jobs=jobs, progress=_cb("baseline"))[hero]
+
+    self_dist = SelfStrengthMonteCarlo(
+        record, seat_params, weights, base_seed=base_seed
+    ).run_all(trials, jobs=jobs, progress=_cb("real"))[hero]
+
+    dx = Diagnosis(
+        hero=hero,
+        actual=placements(record.final_scores)[hero],
+        deal_ev=deal_dist.avg_placement,
+        self_ev=self_dist.avg_placement,
+        deal_trials=deal_dist.n,
+        self_trials=self_dist.n,
+    )
+    dx.strengths = strengths  # 附带,给需要展示强度表的调用方
+    return dx

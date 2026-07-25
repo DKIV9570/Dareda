@@ -4,7 +4,9 @@ install.ps1 text working-tree-encoding=UTF-8 eol=crlf
 # .sh 必须 LF,CRLF 会让 Linux/macOS 报 "bad interpreter"
 install.sh   text eol=lf
 run.sh       text eol=lf
+gui.sh       text eol=lf
 # .cmd 保 CRLF(Windows 批处理)
 run.cmd      text eol=crlf
+gui.cmd      text eol=crlf
 *.py         text eol=lf
 *.rs         text eol=lf

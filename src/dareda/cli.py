@@ -250,13 +250,11 @@ def _cmd_diagnose(args) -> int:
     """一条命令给出「这把怪谁」:牌 / 打法 / 运气 各占多少。"""
     import sys as _sys
 
-    from .analysis.calibrate import calibrate
-    from .analysis.diagnose import Diagnosis
-    from .analysis.strength import measure_strength, render_strength
+    from .analysis.diagnose import run_diagnose
+    from .analysis.strength import render_strength
     from .engine.mortal_engine import EngineUnavailable, load_weights
     from .majsoul.mjai_convert import convert_hand
-    from .montecarlo import SelfStrengthMonteCarlo
-    from .rules import placements
+    from .montecarlo import resolve_jobs
     from .verify import split_actions_by_round
 
     _cap_threads()
@@ -277,49 +275,32 @@ def _cmd_diagnose(args) -> int:
         return 1
 
     names = record.player_names or ("",) * 4
-    from .montecarlo import resolve_jobs
-
     jobs = resolve_jobs(args.jobs, args.trials)
     print(f"牌谱 {record.source}  hero=座{args.hero}"
           + (f"({names[args.hero]})" if names[args.hero] else "")
           + (f"  并行 {jobs} 进程" if jobs > 1 else "  单进程"))
 
-    print("\n[1/3] 测四家强度...", flush=True)
-    strengths = measure_strength(record, humans, weights.make_engine())
-    print(render_strength(strengths, record.player_names))
+    labels = {
+        "strength": "[1/3] 测四家强度...",
+        "baseline": "[2/3] 均等水平基线 —— 这副牌本身值几位",
+        "real": "[3/3] 真实水平 —— 加上各家实际打法",
+    }
+    state = {"phase": None}
 
-    seat_params = {s: calibrate(strengths[s].q_samples, strengths[s].ev_loss) for s in range(4)}
+    def prog(phase, done, total):
+        if phase != state["phase"]:
+            state["phase"] = phase
+            print(("\n" if phase != "strength" else "\n") + labels[phase], flush=True)
+        if total:
+            print(f"\r  {done}/{total}", end="", flush=True)
 
-    # 均等基线:四家统一用"这桌平均水平",座位差异只剩牌与座次
-    avg_ev = sum(strengths[s].ev_loss for s in range(4)) / 4
-    ref = calibrate(strengths[args.hero].q_samples, avg_ev)
-    equal_params = {s: ref for s in range(4)}
-
-    def prog(tag):
-        def f(i, total, res):
-            print(f"\r  {tag} {i}/{total}", end="", flush=True)
-        return f
-
-    print(f"\n[2/3] 均等水平基线({args.trials} 次)—— 这副牌本身值几位", flush=True)
-    deal_dist = SelfStrengthMonteCarlo(
-        record, equal_params, weights, base_seed=args.seed
-    ).run_all(args.trials, jobs=jobs, progress=prog("基线"))[args.hero]
-    print()
-
-    print(f"[3/3] 真实水平({args.trials} 次)—— 加上各家实际打法", flush=True)
-    self_dist = SelfStrengthMonteCarlo(
-        record, seat_params, weights, base_seed=args.seed
-    ).run_all(args.trials, jobs=jobs, progress=prog("真实"))[args.hero]
-    print()
-
-    dx = Diagnosis(
-        hero=args.hero,
-        actual=placements(record.final_scores)[args.hero],
-        deal_ev=deal_dist.avg_placement,
-        self_ev=self_dist.avg_placement,
-        deal_trials=deal_dist.n,
-        self_trials=self_dist.n,
+    dx = run_diagnose(
+        record, humans, args.hero, weights,
+        trials=args.trials, jobs=args.jobs, base_seed=args.seed, progress=prog,
     )
+    print()
+    if dx.strengths:
+        print(render_strength(dx.strengths, record.player_names))
     print()
     print(dx.render(names[args.hero]))
     if dx.check_closure() > 1e-6:

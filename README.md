@@ -96,15 +96,17 @@ dareda verify --record record.json     # 必须全过,不过就别往下跑了
 
 ## 用
 
-### 最省事:一键分析
+### 最省事:图形界面
 
-导出牌谱后(会下到 Downloads),直接双击:
+双击 **`gui.cmd`**(Windows)或跑 `bash gui.sh`(Linux/macOS),打开一个小窗口:
+选牌谱 → 点自己是哪一家 → 开始分析,看着进度条走完就出结论。
 
-- **Windows**:`run.cmd`
-- **Linux / macOS**:`bash run.sh`
+（Linux 若报 `No module named 'tkinter'`,装一下:`sudo apt install python3-tk`。）
 
-它会自动找到你刚导出的抓包文件、解码、自检,然后列出四家让你选自己是几号座,
-最后跑出「这把怪谁」的结论。全程不用记命令。也可以把牌谱文件直接拖到 `run.cmd` 上。
+### 或者:命令行一键脚本
+
+不想要窗口的话,双击 **`run.cmd`**(Windows)或 `bash run.sh`,它会自动找到你刚导出的
+抓包文件、解码、自检,列出四家让你选座,跑出结论。也可以把牌谱文件直接拖到 `run.cmd` 上。
 
 ### 或者用命令
 
