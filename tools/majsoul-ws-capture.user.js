@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         majsoul-ws-capture
 // @namespace    dareda
-// @version      0.3.0
+// @version      0.3.1
 // @description  录下雀魂客户端的 WebSocket 原始帧,用于离线提取牌谱牌山
 // @match        https://game.maj-soul.com/*
 // @match        https://www.maj-soul.com/*
@@ -199,26 +199,34 @@
     window.__mjsCapture = { frames: frames, dump: dump };
 
     // 悬浮按钮:点了才下载,永远不会误触(不再绑热键)。
-    // 脚本在 document-start 跑,body 可能还没有,等 DOM 就绪再插按钮。
+    //
+    // 两个坑:
+    //   - 脚本在 document-start 跑,body 可能还没有;
+    //   - 雀魂是 Unity 重型 SPA,加载时会重建 body,把插进去的按钮冲掉。
+    // 所以挂在更稳的 <html>(documentElement)上,并用定时器保证它一直在。
     function addButton() {
         if (document.getElementById("mjs-cap-btn")) return;
+        const root = document.documentElement || document.body;
+        if (!root) return;
         const btn = document.createElement("button");
         btn.id = "mjs-cap-btn";
         btn.textContent = "⬇ 导出牌谱";
         btn.style.cssText = [
-            "position:fixed", "right:14px", "bottom:14px", "z-index:2147483647",
-            "padding:8px 14px", "font:14px/1.2 sans-serif", "color:#fff",
-            "background:#3987e5", "border:none", "border-radius:8px",
-            "cursor:pointer", "opacity:0.55", "box-shadow:0 2px 8px rgba(0,0,0,.4)",
-            "transition:opacity .15s",
+            "position:fixed", "right:16px", "bottom:16px", "z-index:2147483647",
+            "padding:10px 16px", "font:bold 15px/1.2 sans-serif", "color:#fff",
+            "background:#3987e5", "border:2px solid #fff", "border-radius:10px",
+            "cursor:pointer", "opacity:0.9", "box-shadow:0 2px 10px rgba(0,0,0,.5)",
+            "transition:opacity .15s", "pointer-events:auto",
         ].join(";");
         btn.addEventListener("mouseenter", () => (btn.style.opacity = "1"));
-        btn.addEventListener("mouseleave", () => (btn.style.opacity = "0.55"));
+        btn.addEventListener("mouseleave", () => (btn.style.opacity = "0.9"));
         btn.addEventListener("click", dump);
-        document.body.appendChild(btn);
+        root.appendChild(btn);
+        log("导出按钮已就位(右下角)");
     }
-    if (document.body) addButton();
-    else document.addEventListener("DOMContentLoaded", addButton);
+    addButton();
+    // 每 1.5 秒兜底:body 被重建冲掉了就再插回去
+    setInterval(addButton, 1500);
 
-    log("已挂钩 WebSocket / fetch / XHR。点开牌谱后点右下角「导出牌谱」按钮(或控制台执行 __mjsCapture.dump())");
+    log("已挂钩 WebSocket / fetch / XHR (v0.3.1)。点右下角蓝色「导出牌谱」按钮存盘(或控制台执行 __mjsCapture.dump())");
 })();
