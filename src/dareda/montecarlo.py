@@ -52,6 +52,11 @@ class Distribution:
     def avg_score(self) -> float:
         return sum(self.final_scores) / len(self.final_scores) if self.final_scores else 0.0
 
+    def pcts(self) -> list[float]:
+        """1/2/3/4 位各自的百分比,长度 4,和为 100(有样本时)。"""
+        n = self.n or 1
+        return [self.counts.get(p, 0) / n * 100 for p in (1, 2, 3, 4)]
+
     def render(self, label: str = "") -> str:
         head = f"{label}  n={self.n}  平均顺位 {self.avg_placement:.2f}  平均点数 {self.avg_score:.0f}"
         bars = []

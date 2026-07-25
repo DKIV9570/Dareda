@@ -39,17 +39,15 @@ class DaredaGUI:
 
         root.title("誰だ / dareda —— 这把怪谁")
         root.configure(bg=BG)
-        root.geometry("640x680")
-        root.minsize(560, 620)
+        root.geometry("640x780")
+        root.minsize(560, 680)
 
         self._build()
 
     # ---------------------------------------------------------------- 布局
     def _build(self):
-        tk.Label(self.root, text="這把怪誰?", bg=BG, fg=ACCENT,
-                 font=("Microsoft YaHei", 20, "bold")).pack(pady=(10, 2))
-        tk.Label(self.root, text="在原牌山上重打几十遍,看牌、打法、运气各占多少锅",
-                 bg=BG, fg=MUTED, font=("Microsoft YaHei", 10)).pack()
+        tk.Label(self.root, text="這把怪誰?  ·  牌 / 打法 / 运气,各占多少锅",
+                 bg=BG, fg=ACCENT, font=("Microsoft YaHei", 13, "bold")).pack(pady=(8, 4))
 
         # 1. 选文件
         row = tk.Frame(self.root, bg=BG)
@@ -88,14 +86,62 @@ class DaredaGUI:
                                font=("Microsoft YaHei", 9))
         self.status.pack()
 
-        # 4. 结果
-        self.result = tk.Text(self.root, bg=CARD, fg=FG, relief="flat", height=12,
-                              font=("Consolas", 11), padx=14, pady=12, wrap="word")
-        self.result.pack(fill="both", expand=True, padx=24, pady=(6, 14))
+        # 4. 结果:上面两条名次分布横条,下面文字结论
+        self.res_frame = tk.Frame(self.root, bg=CARD)
+        self.res_frame.pack(fill="both", expand=True, padx=24, pady=(6, 14))
+
+        self.res_title = tk.Label(self.res_frame, text="", bg=CARD, fg=MUTED, anchor="w",
+                                  font=("Microsoft YaHei", 10))
+        self.bar_self_lbl = tk.Label(self.res_frame, text="", bg=CARD, fg=FG, anchor="w",
+                                     font=("Microsoft YaHei", 10))
+        self.bar_self = self._make_bar()
+        self.bar_hero_lbl = tk.Label(self.res_frame, text="", bg=CARD, fg=FG, anchor="w",
+                                     font=("Microsoft YaHei", 10))
+        self.bar_hero = self._make_bar()
+
+        self.result = tk.Text(self.res_frame, bg=CARD, fg=FG, relief="flat", height=8,
+                              font=("Consolas", 12), padx=2, pady=6, wrap="word",
+                              highlightthickness=0)
         self.result.tag_config("good", foreground=ACCENT)
         self.result.tag_config("bad", foreground=BAD)
         self.result.tag_config("muted", foreground=MUTED)
         self.result.configure(state="disabled")
+
+    # 名次分布横条:一个记住自己 pcts、随宽度变化重绘的 Canvas
+    SEG_COLORS = ("#3fb950", "#3987e5", "#eda100", "#e66767")  # 1/2/3/4 位:绿蓝橙红
+
+    def _make_bar(self):
+        c = tk.Canvas(self.res_frame, bg=CARD, height=30, highlightthickness=0)
+        c._pcts = None
+        c._mark = None
+        c.bind("<Configure>", lambda e, cv=c: self._draw_bar(cv))
+        return c
+
+    def _draw_bar(self, canvas):
+        canvas.delete("all")
+        pcts = canvas._pcts
+        if not pcts:
+            return
+        w = canvas.winfo_width()
+        h = int(canvas["height"])
+        if w <= 1:
+            return
+        x = 0.0
+        for i, pct in enumerate(pcts):
+            seg = pct / 100 * w
+            canvas.create_rectangle(x, 4, x + seg, h - 2, fill=self.SEG_COLORS[i],
+                                    outline=CARD, width=1)
+            if seg >= 34:
+                canvas.create_text(x + seg / 2, (h + 2) / 2, text=f"{pct:.0f}%",
+                                   fill="#ffffff", font=("Microsoft YaHei", 9, "bold"))
+            x += seg
+        # 实际名次:在对应段顶端点一个白三角
+        if canvas._mark:
+            cx = 0.0
+            for i in range(canvas._mark - 1):
+                cx += pcts[i] / 100 * w
+            cx += pcts[canvas._mark - 1] / 100 * w / 2
+            canvas.create_polygon(cx - 5, 0, cx + 5, 0, cx, 6, fill="#ffffff")
 
     # ---------------------------------------------------------------- 选文件
     def _pick(self):
@@ -236,26 +282,41 @@ class DaredaGUI:
 
     # ---------------------------------------------------------------- 渲染
     def _render_diagnosis(self, dx, name):
+        # 标题 + 两条名次分布横条
+        self.res_title.config(text=f"座{dx.hero} {name} —— 这副牌上,你的名次概率")
+        self.bar_self_lbl.config(text=f"你的真实水平(实际 {dx.actual} 位 ▲):")
+        self.bar_self._pcts = dx.self_pcts
+        self.bar_self._mark = dx.actual
+        self.bar_hero_lbl.config(text="你换满血 AI(打法天花板):")
+        self.bar_hero._pcts = dx.hero_pcts
+        self.bar_hero._mark = None
+
+        self.res_title.pack(fill="x", pady=(2, 2))
+        self.bar_self_lbl.pack(fill="x")
+        self.bar_self.pack(fill="x", pady=(0, 2))
+        self.bar_hero_lbl.pack(fill="x")
+        self.bar_hero.pack(fill="x", pady=(0, 6))
+        self.result.pack(fill="both", expand=True)
+        self._draw_bar(self.bar_self)
+        self._draw_bar(self.bar_hero)
+
+        # 图例
+        self._legend_done = getattr(self, "_legend_done", False)
+
+        # 文字结论
         self.result.configure(state="normal")
         self.result.delete("1.0", "end")
 
         def line(text, tag=None):
             self.result.insert("end", text + "\n", tag or ())
 
-        line(f"座{dx.hero} {name}", "muted")
-        line("")
         line(f"牌   {_stars(dx.deal_gain)}  {dx.deal_label}")
         line(f"打   {_stars(dx.skill_gain)}  {dx.skill_label}  ({dx.skill_gain:+.2f})")
         luck_tag = "good" if dx.luck_gain > 0 else "bad"
-        line(f"运   {_stars(dx.luck_gain)}  {dx.luck_label}"
-             f"  (实际 {dx.actual} 位)", luck_tag)
+        line(f"运   {_stars(dx.luck_gain)}  {dx.luck_label}", luck_tag)
         line("")
         line("→ " + dx.verdict(), "good" if "顺" in dx.luck_label else
              ("bad" if "背" in dx.luck_label else None))
-        line("")
-        line(f"牌与座次 {dx.deal_gain:+.2f}  +  打法 {dx.skill_gain:+.2f}"
-             f"  +  运气 {dx.luck_gain:+.2f}  =  {2.5 - dx.actual:+.2f}", "muted")
-        line("")
         quip, tag = _luck_quip(dx.luck_label)
         line(quip, tag)
         self.result.configure(state="disabled")
@@ -264,6 +325,11 @@ class DaredaGUI:
         self.status.config(text=text)
 
     def _set_result(self, text):
+        # 纯文本(清空 / 报错):把横条那几块收起来,只留文字
+        for w in (self.res_title, self.bar_self_lbl, self.bar_self,
+                  self.bar_hero_lbl, self.bar_hero):
+            w.pack_forget()
+        self.result.pack(fill="both", expand=True)
         self.result.configure(state="normal")
         self.result.delete("1.0", "end")
         self.result.insert("1.0", text)

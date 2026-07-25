@@ -55,6 +55,12 @@ class Diagnosis:
     self_trials: int = 0
     strengths: object = None
     """四家强度({seat: SeatStrength}),供展示;分解本身不用它。"""
+    self_pcts: object = None
+    """真实水平下 hero 的名次分布 [1位%, 2位%, 3位%, 4位%],供画横条。"""
+    hero_pcts: object = None
+    """只有 hero 换满血 Mortal(对手不变)下的名次分布,供画横条。"""
+    hero_ev: float = 0.0
+    """hero 换满血 Mortal 的平均名次。"""
 
     # ---- 三项贡献(统一成"正数=对你有利") ----
     @property
@@ -145,9 +151,32 @@ class Diagnosis:
         ]
         if self.deal_trials or self.self_trials:
             lines.append(
-                f"    (均等基线 {self.deal_trials} 次 / 真实水平 {self.self_trials} 次蒙特卡洛)"
+                f"    (每条基线 {self.self_trials} 次蒙特卡洛)"
             )
         return "\n".join(lines)
+
+    def bars_text(self) -> str:
+        """两条名次分布横条(文本版):真实水平 + 换满血 Mortal。"""
+        if not self.self_pcts:
+            return ""
+        out = ["  这副牌上,你的名次概率(横条按 1/2/3/4 位切分):"]
+        out.append(self._one_bar("你的真实水平  ", self.self_pcts, mark=self.actual))
+        if self.hero_pcts:
+            out.append(self._one_bar("你换满血 AI   ", self.hero_pcts))
+        out.append("                  " + "".join(f"{p}位".ljust(9) for p in (1, 2, 3, 4)))
+        return "\n".join(out)
+
+    @staticmethod
+    def _one_bar(label: str, pcts, width: int = 36, mark: int | None = None) -> str:
+        glyphs = "①②③④"
+        seg = ""
+        for i, pct in enumerate(pcts):
+            w = round(pct / 100 * width)
+            seg += glyphs[i] * w
+        seg = (seg + glyphs[3] * width)[:width]  # 补齐/截断到固定宽
+        pct_txt = "  ".join(f"{p:.0f}%" for p in pcts)
+        tail = f"  (实际 {mark} 位)" if mark else ""
+        return f"  {label}[{seg}]  {pct_txt}{tail}"
 
 
 def run_diagnose(
@@ -163,12 +192,12 @@ def run_diagnose(
 ) -> "Diagnosis":
     """完整跑一次诊断,返回 :class:`Diagnosis`。CLI 与 GUI 共用这一套编排。
 
-    分三步:测四家强度 → 均等水平基线蒙特卡洛 → 真实水平蒙特卡洛。
+    分四步:测四家强度 → 均等水平基线 → 真实水平 → 只有 hero 换满血 Mortal。
 
     :param progress: 可选回调 ``(phase, done, total)``,phase ∈
-        ``{"strength", "baseline", "real"}``。strength 阶段 total 未知,done=total=0。
+        ``{"strength", "baseline", "real", "hero"}``。strength 阶段 total 未知,done=total=0。
     """
-    from .calibrate import calibrate
+    from .calibrate import BoltzmannParams, calibrate
     from .strength import measure_strength
     from ..montecarlo import SelfStrengthMonteCarlo, resolve_jobs
     from ..rules import placements
@@ -196,6 +225,13 @@ def run_diagnose(
         record, seat_params, weights, base_seed=base_seed
     ).run_all(trials, jobs=jobs, progress=_cb("real"))[hero]
 
+    # 只有 hero 换成满血 Mortal(greedy),对手保持各自真实强度 —— "你的天花板"
+    hero_params = dict(seat_params)
+    hero_params[hero] = BoltzmannParams(0.0, 1.0)
+    hero_dist = SelfStrengthMonteCarlo(
+        record, hero_params, weights, base_seed=base_seed
+    ).run_all(trials, jobs=jobs, progress=_cb("hero"))[hero]
+
     dx = Diagnosis(
         hero=hero,
         actual=placements(record.final_scores)[hero],
@@ -203,6 +239,9 @@ def run_diagnose(
         self_ev=self_dist.avg_placement,
         deal_trials=deal_dist.n,
         self_trials=self_dist.n,
+        self_pcts=self_dist.pcts(),
+        hero_pcts=hero_dist.pcts(),
+        hero_ev=hero_dist.avg_placement,
     )
     dx.strengths = strengths  # 附带,给需要展示强度表的调用方
     return dx

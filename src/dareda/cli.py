@@ -281,9 +281,10 @@ def _cmd_diagnose(args) -> int:
           + (f"  并行 {jobs} 进程" if jobs > 1 else "  单进程"))
 
     labels = {
-        "strength": "[1/3] 测四家强度...",
-        "baseline": "[2/3] 均等水平基线 —— 这副牌本身值几位",
-        "real": "[3/3] 真实水平 —— 加上各家实际打法",
+        "strength": "[1/4] 测四家强度...",
+        "baseline": "[2/4] 均等水平基线 —— 这副牌本身值几位",
+        "real": "[3/4] 真实水平 —— 加上各家实际打法",
+        "hero": "[4/4] 换满血 AI —— 你的天花板",
     }
     state = {"phase": None}
 
@@ -303,6 +304,8 @@ def _cmd_diagnose(args) -> int:
         print(render_strength(dx.strengths, record.player_names))
     print()
     print(dx.render(names[args.hero]))
+    print()
+    print(dx.bars_text())
     if dx.check_closure() > 1e-6:
         print("\n  ! 分解未闭合,数字有问题,请报 issue")
     return 0
