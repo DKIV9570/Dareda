@@ -39,21 +39,21 @@ class DaredaGUI:
 
         root.title("誰だ / dareda —— 这把怪谁")
         root.configure(bg=BG)
-        root.geometry("640x620")
-        root.minsize(560, 560)
+        root.geometry("640x680")
+        root.minsize(560, 620)
 
         self._build()
 
     # ---------------------------------------------------------------- 布局
     def _build(self):
         tk.Label(self.root, text="這把怪誰?", bg=BG, fg=ACCENT,
-                 font=("Microsoft YaHei", 20, "bold")).pack(pady=(16, 2))
+                 font=("Microsoft YaHei", 20, "bold")).pack(pady=(10, 2))
         tk.Label(self.root, text="在原牌山上重打几十遍,看牌、打法、运气各占多少锅",
                  bg=BG, fg=MUTED, font=("Microsoft YaHei", 10)).pack()
 
         # 1. 选文件
         row = tk.Frame(self.root, bg=BG)
-        row.pack(fill="x", padx=24, pady=(18, 4))
+        row.pack(fill="x", padx=24, pady=(12, 4))
         self.file_lbl = tk.Label(row, text="① 还没选牌谱", bg=BG, fg=FG, anchor="w",
                                  font=("Microsoft YaHei", 10))
         self.file_lbl.pack(side="left", fill="x", expand=True)
@@ -63,7 +63,7 @@ class DaredaGUI:
         # 2. 选座
         self.seat_frame = tk.LabelFrame(self.root, text=" ② 你是哪一家 ",
                                         bg=BG, fg=MUTED, font=("Microsoft YaHei", 10))
-        self.seat_frame.pack(fill="x", padx=24, pady=8)
+        self.seat_frame.pack(fill="x", padx=24, pady=6)
         self.seat_var = tk.IntVar(value=-1)
         self.seat_hint = tk.Label(self.seat_frame, text="选好牌谱后这里会列出四家",
                                   bg=BG, fg=MUTED, font=("Microsoft YaHei", 9))
@@ -71,7 +71,7 @@ class DaredaGUI:
 
         # 3. 跑
         run_row = tk.Frame(self.root, bg=BG)
-        run_row.pack(fill="x", padx=24, pady=(4, 8))
+        run_row.pack(fill="x", padx=24, pady=(4, 6))
         self.run_btn = tk.Button(run_row, text="③ 开始分析", command=self._start,
                                  bg=ACCENT, fg="#ffffff", relief="flat",
                                  font=("Microsoft YaHei", 11, "bold"), state="disabled",
@@ -89,9 +89,9 @@ class DaredaGUI:
         self.status.pack()
 
         # 4. 结果
-        self.result = tk.Text(self.root, bg=CARD, fg=FG, relief="flat", height=13,
+        self.result = tk.Text(self.root, bg=CARD, fg=FG, relief="flat", height=12,
                               font=("Consolas", 11), padx=14, pady=12, wrap="word")
-        self.result.pack(fill="both", expand=True, padx=24, pady=(6, 18))
+        self.result.pack(fill="both", expand=True, padx=24, pady=(6, 14))
         self.result.tag_config("good", foreground=ACCENT)
         self.result.tag_config("bad", foreground=BAD)
         self.result.tag_config("muted", foreground=MUTED)
@@ -255,7 +255,9 @@ class DaredaGUI:
         line("")
         line(f"牌与座次 {dx.deal_gain:+.2f}  +  打法 {dx.skill_gain:+.2f}"
              f"  +  运气 {dx.luck_gain:+.2f}  =  {2.5 - dx.actual:+.2f}", "muted")
-        line(f"(每条基线 {dx.self_trials} 次蒙特卡洛;数字有噪声,看方向)", "muted")
+        line("")
+        quip, tag = _luck_quip(dx.luck_label)
+        line(quip, tag)
         self.result.configure(state="disabled")
 
     def _set_status(self, text):
@@ -272,6 +274,15 @@ def _stars(delta, span=0.8):
     r = max(-1.0, min(1.0, delta / span))
     filled = round((r + 1) / 2 * 5)
     return "★" * filled + "☆" * (5 - filled)
+
+
+def _luck_quip(luck_label):
+    """给运气判定配一句发牌姬吐槽,返回 (文案, 颜色 tag)。"""
+    if "背" in luck_label:
+        return "运气背 —— 牌姬搞你,开喷!", "bad"
+    if "顺" in luck_label:
+        return "运气顺 —— 发牌姬:无辜的喵~", "good"
+    return "运气正常 —— 这把发牌姬没参与,愿赌服输", "muted"
 
 
 def main():
