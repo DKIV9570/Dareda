@@ -56,6 +56,9 @@ class MortalWeights:
     tag: str
     steps: object
     torch_version: str
+    state_file: str = ""
+    """加载来源,供多进程 worker 各自重新加载(torch 模型没法跨进程 pickle)。"""
+    mortal_src: object = None
 
     def make_engine(
         self,
@@ -121,6 +124,7 @@ def load_weights(
     return MortalWeights(
         brain=brain, dqn=dqn, version=version, device=device,
         tag=tag, steps=state.get("steps"), torch_version=torch.__version__,
+        state_file=str(state_file), mortal_src=(str(mortal_src) if mortal_src else None),
     )
 
 

@@ -133,8 +133,9 @@ dareda counterfactual --record record.json --hero 1
 dareda montecarlo --record record.json --hero 1 --trials 20 --sensitivity
 ```
 
-CPU 上一条轨迹约 7 秒。`self-luck --trials 30` 要三四分钟;`diagnose` 要跑两条基线
-(均等水平 + 真实水平),默认 `--trials 20` 约十分钟。有显卡加 `--device cuda:0` 快很多。
+`diagnose` / `self-luck` / `montecarlo` 会**按你的 CPU 自动多进程并行**(默认最多 4 个,
+为控内存;每进程各要一份 ~130MB 权重)。核多的话加 `--jobs 8` 更快,`--jobs 1` 关掉并行。
+并行不影响结果——同样的种子,几个进程都出一样的数。有显卡再加 `--device cuda:0`。
 
 ### `diagnose` 输出长这样
 

@@ -259,6 +259,7 @@ def _cmd_diagnose(args) -> int:
     from .rules import placements
     from .verify import split_actions_by_round
 
+    _cap_threads()
     raw = json.loads(Path(args.record).read_text(encoding="utf-8"))
     if not (isinstance(raw, dict) and raw.get("mjslog")):
         print("需要含动作流的牌谱(抓包解出来的)。")
@@ -276,8 +277,12 @@ def _cmd_diagnose(args) -> int:
         return 1
 
     names = record.player_names or ("",) * 4
+    from .montecarlo import resolve_jobs
+
+    jobs = resolve_jobs(args.jobs, args.trials)
     print(f"牌谱 {record.source}  hero=座{args.hero}"
-          + (f"({names[args.hero]})" if names[args.hero] else ""))
+          + (f"({names[args.hero]})" if names[args.hero] else "")
+          + (f"  并行 {jobs} 进程" if jobs > 1 else "  单进程"))
 
     print("\n[1/3] 测四家强度...", flush=True)
     strengths = measure_strength(record, humans, weights.make_engine())
@@ -298,13 +303,13 @@ def _cmd_diagnose(args) -> int:
     print(f"\n[2/3] 均等水平基线({args.trials} 次)—— 这副牌本身值几位", flush=True)
     deal_dist = SelfStrengthMonteCarlo(
         record, equal_params, weights, base_seed=args.seed
-    ).run_all(args.trials, progress=prog("基线"))[args.hero]
+    ).run_all(args.trials, jobs=jobs, progress=prog("基线"))[args.hero]
     print()
 
     print(f"[3/3] 真实水平({args.trials} 次)—— 加上各家实际打法", flush=True)
     self_dist = SelfStrengthMonteCarlo(
         record, seat_params, weights, base_seed=args.seed
-    ).run_all(args.trials, progress=prog("真实"))[args.hero]
+    ).run_all(args.trials, jobs=jobs, progress=prog("真实"))[args.hero]
     print()
 
     dx = Diagnosis(
@@ -333,6 +338,7 @@ def _cmd_selfluck(args) -> int:
     from .rules import placements
     from .verify import split_actions_by_round
 
+    _cap_threads()
     raw = json.loads(Path(args.record).read_text(encoding="utf-8"))
     if not (isinstance(raw, dict) and raw.get("mjslog")):
         print("需要含动作流的牌谱(抓包解出来的)。")
@@ -349,8 +355,12 @@ def _cmd_selfluck(args) -> int:
         print(f"引擎不可用:\n{exc}")
         return 1
 
+    from .montecarlo import resolve_jobs
+
+    jobs = resolve_jobs(args.jobs, args.trials)
     print(f"牌谱 {record.source}  hero=座{args.hero}"
-          + (f"({record.player_names[args.hero]})" if record.player_names else ""))
+          + (f"({record.player_names[args.hero]})" if record.player_names else "")
+          + (f"  并行 {jobs} 进程" if jobs > 1 else ""))
     print("测四家强度...", flush=True)
     strengths = measure_strength(record, humans, weights.make_engine())
     print(render_strength(strengths, record.player_names))
@@ -363,7 +373,7 @@ def _cmd_selfluck(args) -> int:
         print(f"\r  轨迹 {i}/{total}", end="", flush=True)
 
     print(f"\n全员按各自水平重打 {args.trials} 次(固定牌山)...", flush=True)
-    dists = mc.run_all(args.trials, progress=prog)  # 一次跑完,四家都拿到
+    dists = mc.run_all(args.trials, jobs=jobs, progress=prog)  # 一次跑完,四家都拿到
     print()
 
     actual_places = placements(record.final_scores)
@@ -424,6 +434,18 @@ def _cmd_link(args) -> int:
     print("\n联网拉取尚未实现(见 majsoul/fetch.py 的 MajsoulApiFetcher)。")
     print("现在请用 tools/majsoul-ws-capture.user.js 抓包,再跑 decode-capture。")
     return 0
+
+
+def _cap_threads() -> None:
+    """把主进程 torch 线程数封到 min(8, 核数)。实测 batch=1 下 16 线程比 8 慢一倍。"""
+    try:
+        import os
+
+        import torch
+
+        torch.set_num_threads(min(8, os.cpu_count() or 8))
+    except Exception:  # noqa: BLE001 - torch 没装时(纯解析命令)不该拦路
+        pass
 
 
 def _force_utf8_stdio() -> None:
@@ -493,6 +515,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--record", required=True, help="含动作流的牌谱")
     p.add_argument("--hero", type=int, required=True)
     p.add_argument("--trials", type=int, default=20, help="每条基线各跑多少次(共两条)")
+    p.add_argument("--jobs", type=int, default=None, help="并行进程数,默认按 CPU 自动;1=不并行")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--model", default="models/mortal_298k.pth")
     p.add_argument("--device", default="cpu")
@@ -503,6 +526,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--record", required=True, help="含动作流的牌谱")
     p.add_argument("--hero", type=int, required=True)
     p.add_argument("--trials", type=int, default=30)
+    p.add_argument("--jobs", type=int, default=None, help="并行进程数,默认按 CPU 自动;1=不并行")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--model", default="models/mortal_298k.pth")
     p.add_argument("--device", default="cpu")

@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import os
 from collections import Counter
 from dataclasses import dataclass, field
 
@@ -184,6 +185,8 @@ class SelfStrengthMonteCarlo:
 
         self._libriichi = libriichi
         self._record = record
+        self._seat_params = seat_params
+        self._weights = weights
         self._base_seed = base_seed
         self._engines = [
             weights.make_engine(name=f"seat{s}", **seat_params[s].as_kwargs())
@@ -191,50 +194,126 @@ class SelfStrengthMonteCarlo:
         ]
 
     def _run_one(self, seed: int):
-        import torch
+        return _play_trajectory(self._record, self._engines, self._libriichi, seed)
 
-        torch.manual_seed(seed)
-        engines = self._engines
-
-        class _Engine:
-            def __init__(inner):
-                inner.idx = 0
-
-            def play_hand(inner, setup: HandSetup):
-                from .deal import split_wall
-
-                runner = self._libriichi.arena.KyokuReplay(engines)  # 四家各自引擎
-                w = split_wall(setup.hand.paishan, setup.hand.oya)
-                out = runner.run(
-                    haipai=[list(h) for h in w.haipai],
-                    yama=list(w.yama), rinshan=list(w.rinshan),
-                    dora_indicators=list(w.dora_indicators),
-                    ura_indicators=list(w.ura_indicators),
-                    kyoku=setup.hand.chang * 4 + setup.hand.ju,
-                    honba=setup.hand.ben, kyotaku=setup.riichi_sticks,
-                    scores=list(setup.scores),
-                )
-                return to_hand_outcome(out, setup)
-
-            def close(inner):
-                pass
-
-        return run_replay(self._record, _Engine())
-
-    def run_all(self, n: int, *, progress=None) -> dict:
+    def run_all(self, n: int, *, jobs=None, progress=None) -> dict:
         """跑 N 条轨迹,**一次拿到四家**的名次分布。
 
         每条轨迹是一整局四人对局,四家的终局点数都在里面 —— 按 hero 分别重跑是浪费。
+
+        :param jobs: 并行进程数。None=自动(见 :func:`resolve_jobs`);1=顺序。每条轨迹按
+            ``base_seed+i`` 播种,**结果与进程数无关** —— jobs=1 和 jobs=8 出一样的分布。
         """
+        jobs = resolve_jobs(jobs, n)
         dists = {s: Distribution(s) for s in range(4)}
-        for i in range(n):
-            res = self._run_one(self._base_seed + i)
-            for s in range(4):
-                dists[s].add(res.final_scores)
-            if progress:
-                progress(i + 1, n, res)
+
+        if jobs <= 1:
+            for i in range(n):
+                scores = self._run_one(self._base_seed + i)
+                for s in range(4):
+                    dists[s].add(scores)
+                if progress:
+                    progress(i + 1, n, scores)
+            return dists
+
+        # 跨轨迹多进程:每个 worker 各自加载权重、单线程,互不干扰(见 _worker_init)。
+        from concurrent.futures import ProcessPoolExecutor, as_completed
+
+        init_args = (
+            self._weights.state_file,
+            self._weights.device,
+            self._weights.mortal_src,
+            self._seat_params,
+            self._record,
+        )
+        done = 0
+        with ProcessPoolExecutor(
+            max_workers=jobs, initializer=_worker_init, initargs=init_args
+        ) as ex:
+            futures = {ex.submit(_worker_run, self._base_seed + i): i for i in range(n)}
+            for fut in as_completed(futures):
+                scores = fut.result()
+                for s in range(4):
+                    dists[s].add(scores)
+                done += 1
+                if progress:
+                    progress(done, n, None)
         return dists
 
-    def run(self, hero_seat: int, n: int, *, progress=None) -> Distribution:
+    def run(self, hero_seat: int, n: int, *, jobs=None, progress=None) -> Distribution:
         """只要某一座的分布(内部仍是一次跑完四家)。"""
-        return self.run_all(n, progress=progress)[hero_seat]
+        return self.run_all(n, jobs=jobs, progress=progress)[hero_seat]
+
+
+# --------------------------------------------------------------- 并行支持
+#
+# 轨迹逻辑抽成模块级函数,才能既给顺序模式用、又能 pickle 到子进程。
+# batch=1 的推理下,16 线程反而比 8 线程慢一倍(实测),所以:主进程 torch 上限设
+# min(8, 核数),每个 worker 单线程(进程间已经在并行了,再多线程只会互相抢核)。
+
+
+class _FourEngineAdapter:
+    """driver 认的 ReplayEngine:四家各自的引擎,逐局用 KyokuReplay 打完。"""
+
+    def __init__(self, engines, libriichi):
+        self._engines = engines
+        self._lib = libriichi
+
+    def play_hand(self, setup: HandSetup):
+        from .deal import split_wall
+
+        w = split_wall(setup.hand.paishan, setup.hand.oya)
+        out = self._lib.arena.KyokuReplay(self._engines).run(
+            haipai=[list(h) for h in w.haipai],
+            yama=list(w.yama), rinshan=list(w.rinshan),
+            dora_indicators=list(w.dora_indicators),
+            ura_indicators=list(w.ura_indicators),
+            kyoku=setup.hand.chang * 4 + setup.hand.ju,
+            honba=setup.hand.ben, kyotaku=setup.riichi_sticks,
+            scores=list(setup.scores),
+        )
+        return to_hand_outcome(out, setup)
+
+    def close(self):
+        pass
+
+
+def _play_trajectory(record, engines, libriichi, seed):
+    """跑一整局(一条轨迹),返回四家终局点数。播种在这里做,保证可复现。"""
+    import torch
+
+    torch.manual_seed(seed)
+    return tuple(run_replay(record, _FourEngineAdapter(engines, libriichi)).final_scores)
+
+
+def resolve_jobs(jobs, n: int) -> int:
+    """定进程数。None=自动:min(核数//2, 4, n) —— 除以二留余量、封顶 4 控内存
+    (每进程各要一份 ~130MB 权重),下限 1。"""
+    if jobs is not None:
+        return max(1, min(int(jobs), n))
+    cores = os.cpu_count() or 2
+    return max(1, min(cores // 2, 4, n))
+
+
+# 每个 worker 进程的全局状态(权重、引擎、牌谱只在 init 时建一次,任务只传种子)
+_WORKER: dict = {}
+
+
+def _worker_init(state_file, device, mortal_src, seat_params, record):
+    import torch
+
+    torch.set_num_threads(1)  # 进程已并行,worker 内再多线程只会抢核
+    import libriichi
+
+    from .engine.mortal_engine import load_weights
+
+    w = load_weights(state_file, device=device, mortal_src=mortal_src)
+    _WORKER["lib"] = libriichi
+    _WORKER["record"] = record
+    _WORKER["engines"] = [
+        w.make_engine(name=f"seat{s}", **seat_params[s].as_kwargs()) for s in range(4)
+    ]
+
+
+def _worker_run(seed):
+    return _play_trajectory(_WORKER["record"], _WORKER["engines"], _WORKER["lib"], seed)
