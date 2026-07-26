@@ -34,6 +34,12 @@ NEUTRAL = 2.5
 BAND = 0.2
 """判"好/烂"的死区,单位是名次。小于这个幅度算"一般",避免把噪声读成结论。"""
 
+LUCK_LO, LUCK_HI = 0.25, 0.75
+"""运气判定的分位阈值。``luck_q``(实际名次在"自己水平分布"里的中位秩,0=最好端、
+1=最差端方向;这里定义成"你赢过自身多少比例的重演",越高越顺)落在下 1/4 → 背、
+上 1/4 → 顺、中间 50% → 愿赌服输。用**分位**而不是均值差,才不会被偏态分布骗
+(双峰分布里 4 位可能很常见,均值差却把它误读成"惨背")。"""
+
 
 def _stars(delta: float, *, span: float = 0.8) -> str:
     """把一个"越正越好"的偏移画成五颗星。``span`` 是满格对应的幅度。"""
@@ -56,11 +62,7 @@ class Diagnosis:
     strengths: object = None
     """四家强度({seat: SeatStrength}),供展示;分解本身不用它。"""
     self_pcts: object = None
-    """真实水平下 hero 的名次分布 [1位%, 2位%, 3位%, 4位%],供画横条。"""
-    hero_pcts: object = None
-    """只有 hero 换满血 Mortal(对手不变)下的名次分布,供画横条。"""
-    hero_ev: float = 0.0
-    """hero 换满血 Mortal 的平均名次。"""
+    """真实水平下 hero 的名次分布 [1位%, 2位%, 3位%, 4位%],供画横条 + 定运气。"""
 
     # ---- 三项贡献(统一成"正数=对你有利") ----
     @property
@@ -96,12 +98,49 @@ class Diagnosis:
         return "打得一般"
 
     @property
+    def luck_q(self) -> float | None:
+        """实际名次在"自己水平分布"里的中位秩:"你赢过了自身多少比例的重演"。
+
+        0 ≈ 落在你最差的一端(很背),1 ≈ 落在最好的一端(很顺),0.5 ≈ 典型结果。
+        用 ½·P(=实际名次) 处理并列,任意偏态都稳。没有分布(self_pcts 缺)时返回 None。
+        """
+        if not self.self_pcts:
+            return None
+        p = [x / 100 for x in self.self_pcts]  # p[0]=1位 ... p[3]=4位
+        a = self.actual  # 1..4,数字越大名次越差
+        p_worse = sum(p[k] for k in range(4) if (k + 1) > a)
+        p_equal = p[a - 1]
+        return p_worse + 0.5 * p_equal
+
+    @property
     def luck_label(self) -> str:
-        if self.luck_gain > BAND:
+        q = self.luck_q
+        if q is None:  # 退化:没有分布时回落到均值差
+            if self.luck_gain > BAND:
+                return "运气顺"
+            if self.luck_gain < -BAND:
+                return "运气背"
+            return "运气正常"
+        if q >= LUCK_HI:
             return "运气顺"
-        if self.luck_gain < -BAND:
+        if q <= LUCK_LO:
             return "运气背"
         return "运气正常"
+
+    def _p_worse_equal(self) -> float:
+        """P(名次 ≥ 实际):你的同水平打到"这么差或更差"的概率。"""
+        if not self.self_pcts:
+            return 0.0
+        p = [x / 100 for x in self.self_pcts]
+        return sum(p[k] for k in range(4) if (k + 1) >= self.actual)
+
+    def luck_stars(self) -> str:
+        """运气五颗星:直接由 ``luck_q`` 画(顺=满、背=空),和判定同源。"""
+        q = self.luck_q
+        if q is None:
+            return _stars(self.luck_gain)
+        filled = round(q * 5)
+        return "★" * filled + "☆" * (5 - filled)
 
     @property
     def quadrant(self) -> str:
@@ -139,9 +178,11 @@ class Diagnosis:
             f"均等水平下,这个座位期望 {self.deal_ev:.2f} 位",
             f"  打   {_stars(self.skill_gain)}  {self.skill_label:<6}"
             f"你的打法把期望推到 {self.self_ev:.2f} 位({self.skill_gain:+.2f})",
-            f"  运   {_stars(self.luck_gain)}  {self.luck_label:<6}"
-            f"实际 {self.actual} 位,比期望{'好' if self.luck_gain >= 0 else '差'} "
-            f"{abs(self.luck_gain):.2f} 位",
+            f"  运   {self.luck_stars()}  {self.luck_label:<6}"
+            + (f"你的同水平里,{self.actual} 位或更差占 "
+               f"{self._p_worse_equal()*100:.0f}%"
+               if self.self_pcts else
+               f"实际 {self.actual} 位,比期望差 {abs(self.luck_gain):.2f} 位"),
             "",
             f"  → {self.verdict()}",
             "",
@@ -156,13 +197,11 @@ class Diagnosis:
         return "\n".join(lines)
 
     def bars_text(self) -> str:
-        """两条名次分布横条(文本版):真实水平 + 换满血 Mortal。"""
+        """名次分布横条(文本版):这副牌上,你自己水平各名次的概率。"""
         if not self.self_pcts:
             return ""
-        out = ["  这副牌上,你的名次概率(横条按 1/2/3/4 位切分):"]
+        out = ["  这副牌上,你的名次概率(横条按 1/2/3/4 位切分,▲=实际):"]
         out.append(self._one_bar("你的真实水平  ", self.self_pcts, mark=self.actual))
-        if self.hero_pcts:
-            out.append(self._one_bar("你换满血 AI   ", self.hero_pcts))
         out.append("                  " + "".join(f"{p}位".ljust(9) for p in (1, 2, 3, 4)))
         return "\n".join(out)
 
@@ -192,12 +231,12 @@ def run_diagnose(
 ) -> "Diagnosis":
     """完整跑一次诊断,返回 :class:`Diagnosis`。CLI 与 GUI 共用这一套编排。
 
-    分四步:测四家强度 → 均等水平基线 → 真实水平 → 只有 hero 换满血 Mortal。
+    分三步:测四家强度 → 均等水平基线(定牌/座)→ 真实水平(定打法 + 运气分布)。
 
     :param progress: 可选回调 ``(phase, done, total)``,phase ∈
-        ``{"strength", "baseline", "real", "hero"}``。strength 阶段 total 未知,done=total=0。
+        ``{"strength", "baseline", "real"}``。strength 阶段 total 未知,done=total=0。
     """
-    from .calibrate import BoltzmannParams, calibrate
+    from .calibrate import calibrate
     from .strength import measure_strength
     from ..montecarlo import SelfStrengthMonteCarlo, resolve_jobs
     from ..rules import placements
@@ -225,13 +264,6 @@ def run_diagnose(
         record, seat_params, weights, base_seed=base_seed
     ).run_all(trials, jobs=jobs, progress=_cb("real"))[hero]
 
-    # 只有 hero 换成满血 Mortal(greedy),对手保持各自真实强度 —— "你的天花板"
-    hero_params = dict(seat_params)
-    hero_params[hero] = BoltzmannParams(0.0, 1.0)
-    hero_dist = SelfStrengthMonteCarlo(
-        record, hero_params, weights, base_seed=base_seed
-    ).run_all(trials, jobs=jobs, progress=_cb("hero"))[hero]
-
     dx = Diagnosis(
         hero=hero,
         actual=placements(record.final_scores)[hero],
@@ -240,8 +272,6 @@ def run_diagnose(
         deal_trials=deal_dist.n,
         self_trials=self_dist.n,
         self_pcts=self_dist.pcts(),
-        hero_pcts=hero_dist.pcts(),
-        hero_ev=hero_dist.avg_placement,
     )
     dx.strengths = strengths  # 附带,给需要展示强度表的调用方
     return dx

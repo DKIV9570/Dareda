@@ -39,8 +39,8 @@ class DaredaGUI:
 
         root.title("誰だ / dareda —— 这把怪谁")
         root.configure(bg=BG)
-        root.geometry("640x780")
-        root.minsize(560, 680)
+        root.geometry("640x640")
+        root.minsize(560, 600)
 
         self._build()
 
@@ -95,9 +95,6 @@ class DaredaGUI:
         self.bar_self_lbl = tk.Label(self.res_frame, text="", bg=CARD, fg=FG, anchor="w",
                                      font=("Microsoft YaHei", 10))
         self.bar_self = self._make_bar()
-        self.bar_hero_lbl = tk.Label(self.res_frame, text="", bg=CARD, fg=FG, anchor="w",
-                                     font=("Microsoft YaHei", 10))
-        self.bar_hero = self._make_bar()
 
         self.result = tk.Text(self.res_frame, bg=CARD, fg=FG, relief="flat", height=8,
                               font=("Consolas", 12), padx=2, pady=6, wrap="word",
@@ -283,25 +280,16 @@ class DaredaGUI:
     # ---------------------------------------------------------------- 渲染
     def _render_diagnosis(self, dx, name):
         # 标题 + 两条名次分布横条
-        self.res_title.config(text=f"座{dx.hero} {name} —— 这副牌上,你的名次概率")
-        self.bar_self_lbl.config(text=f"你的真实水平(实际 {dx.actual} 位 ▲):")
+        self.res_title.config(text=f"座{dx.hero} {name} —— 这副牌上,你自己水平各名次的概率")
+        self.bar_self_lbl.config(text=f"绿蓝橙红 = 1/2/3/4 位,▲ = 你实际的 {dx.actual} 位:")
         self.bar_self._pcts = dx.self_pcts
         self.bar_self._mark = dx.actual
-        self.bar_hero_lbl.config(text="你换满血 AI(打法天花板):")
-        self.bar_hero._pcts = dx.hero_pcts
-        self.bar_hero._mark = None
 
         self.res_title.pack(fill="x", pady=(2, 2))
         self.bar_self_lbl.pack(fill="x")
-        self.bar_self.pack(fill="x", pady=(0, 2))
-        self.bar_hero_lbl.pack(fill="x")
-        self.bar_hero.pack(fill="x", pady=(0, 6))
+        self.bar_self.pack(fill="x", pady=(0, 6))
         self.result.pack(fill="both", expand=True)
         self._draw_bar(self.bar_self)
-        self._draw_bar(self.bar_hero)
-
-        # 图例
-        self._legend_done = getattr(self, "_legend_done", False)
 
         # 文字结论
         self.result.configure(state="normal")
@@ -312,8 +300,8 @@ class DaredaGUI:
 
         line(f"牌   {_stars(dx.deal_gain)}  {dx.deal_label}")
         line(f"打   {_stars(dx.skill_gain)}  {dx.skill_label}  ({dx.skill_gain:+.2f})")
-        luck_tag = "good" if dx.luck_gain > 0 else "bad"
-        line(f"运   {_stars(dx.luck_gain)}  {dx.luck_label}", luck_tag)
+        luck_tag = "good" if "顺" in dx.luck_label else ("bad" if "背" in dx.luck_label else "muted")
+        line(f"运   {dx.luck_stars()}  {dx.luck_label}", luck_tag)
         line("")
         line("→ " + dx.verdict(), "good" if "顺" in dx.luck_label else
              ("bad" if "背" in dx.luck_label else None))
@@ -326,8 +314,7 @@ class DaredaGUI:
 
     def _set_result(self, text):
         # 纯文本(清空 / 报错):把横条那几块收起来,只留文字
-        for w in (self.res_title, self.bar_self_lbl, self.bar_self,
-                  self.bar_hero_lbl, self.bar_hero):
+        for w in (self.res_title, self.bar_self_lbl, self.bar_self):
             w.pack_forget()
         self.result.pack(fill="both", expand=True)
         self.result.configure(state="normal")

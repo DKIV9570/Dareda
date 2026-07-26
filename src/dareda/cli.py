@@ -281,10 +281,9 @@ def _cmd_diagnose(args) -> int:
           + (f"  并行 {jobs} 进程" if jobs > 1 else "  单进程"))
 
     labels = {
-        "strength": "[1/4] 测四家强度...",
-        "baseline": "[2/4] 均等水平基线 —— 这副牌本身值几位",
-        "real": "[3/4] 真实水平 —— 加上各家实际打法",
-        "hero": "[4/4] 换满血 AI —— 你的天花板",
+        "strength": "[1/3] 测四家强度...",
+        "baseline": "[2/3] 均等水平基线 —— 这副牌本身值几位",
+        "real": "[3/3] 真实水平 —— 加上各家实际打法",
     }
     state = {"phase": None}
 
