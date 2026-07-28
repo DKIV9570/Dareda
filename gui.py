@@ -76,7 +76,7 @@ class DaredaGUI:
                                  padx=16, pady=4)
         self.run_btn.pack(side="left")
         tk.Label(run_row, text="次数", bg=BG, fg=MUTED).pack(side="left", padx=(14, 2))
-        self.trials = tk.IntVar(value=20)
+        self.trials = tk.IntVar(value=30)
         ttk.Combobox(run_row, textvariable=self.trials, width=5, state="readonly",
                      values=(10, 20, 30, 50)).pack(side="left")
 
@@ -299,7 +299,9 @@ class DaredaGUI:
             self.result.insert("end", text + "\n", tag or ())
 
         line(f"牌   {_stars(dx.deal_gain)}  {dx.deal_label}")
-        line(f"打   {_stars(dx.skill_gain)}  {dx.skill_label}  ({dx.skill_gain:+.2f})")
+        note = dx.skill_note()
+        line(f"打   {_stars(dx.skill_gain)}  {dx.skill_label}  ({dx.skill_gain:+.2f})"
+             + (f"    {note}" if note else ""))
         luck_tag = "good" if "顺" in dx.luck_label else ("bad" if "背" in dx.luck_label else "muted")
         line(f"运   {dx.luck_stars()}  {dx.luck_label}", luck_tag)
         line("")

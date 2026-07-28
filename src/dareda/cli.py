@@ -497,7 +497,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("diagnose", help="一条命令:这把怪谁(牌/打法/运气 各占多少)")
     p.add_argument("--record", required=True, help="含动作流的牌谱")
     p.add_argument("--hero", type=int, required=True)
-    p.add_argument("--trials", type=int, default=20, help="每条基线各跑多少次(共两条)")
+    p.add_argument("--trials", type=int, default=30, help="每条基线各跑多少次(共两条)")
     p.add_argument("--jobs", type=int, default=None, help="并行进程数,默认按 CPU 自动;1=不并行")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--model", default="models/mortal_298k.pth")

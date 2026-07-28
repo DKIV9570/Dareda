@@ -3,8 +3,8 @@
 产出两个度量:
 
 * **一致率**:该家实际动作 == Mortal 首选(greedy argmax)的比例。计算不需要动作
-  索引映射,只比 mjai 动作串。缺点:把"真的弱"、"风格不同"、"决策本身是近平手"
-  三件事混在一起。
+  索引映射,只比 mjai 动作串。**只有一个合法动作的强制点(立直后摸切等)不计入** ——
+  否则会白刷一致率。缺点:仍把"真的弱"、"风格不同"、"决策本身是近平手"混在一起。
 * **EV loss**:每决策 ``Q(Mortal 首选) - Q(该家实际动作)`` 的平均,单位是 Mortal 的
   Q 值(近似顺位期望)。按分歧的**代价**加权 —— 近平手上的分歧几乎不计,明显错误
   才计。这是更干净的强度度量,标定应当用它。
@@ -173,6 +173,16 @@ def measure_strength(record, human_events_per_hand, mortal_engine, *, seats=rang
 
 
 def _score(st: SeatStrength, human_ev: dict, mortal_reaction: dict, label: str = "") -> None:
+    meta = mortal_reaction.get("meta") or {}
+    q = meta.get("q_values")
+    mask = meta.get("mask_bits")
+
+    # 跳过"只有一个合法动作"的强制决策(立直后摸切、唯一的被迫应对等):它不是选择。
+    # 计进一致率是白刷分(两边都只能这么做),计进 EV loss 是拿 0 损失稀释平均。
+    # 只有拿得到 mask 才判得了合不合法;判不了就按老样子计(极少)。
+    if mask is not None and bin(mask).count("1") <= 1:
+        return
+
     st.decisions += 1
     # 一致率:动作类型 + 关键字段是否相同
     same = mortal_reaction.get("type") == human_ev["type"] and mortal_reaction.get(
@@ -181,9 +191,6 @@ def _score(st: SeatStrength, human_ev: dict, mortal_reaction: dict, label: str =
     if same:
         st.agreements += 1
 
-    meta = mortal_reaction.get("meta") or {}
-    q = meta.get("q_values")
-    mask = meta.get("mask_bits")
     if not q or mask is None:
         return
     qmap = _decompact_q(q, mask)

@@ -127,6 +127,26 @@ class Diagnosis:
             return "运气背"
         return "运气正常"
 
+    def ev_loss_rank(self) -> int | None:
+        """hero 的 EV loss 在四家里的名次(1=最低=打得最干净)。没有 strengths 时 None。"""
+        if not self.strengths:
+            return None
+        order = sorted(range(4), key=lambda s: self.strengths[s].ev_loss)
+        return order.index(self.hero) + 1
+
+    def skill_note(self) -> str:
+        """一句直接、无噪声的水平读数:EV loss 值 + 四家里的排名。
+
+        「打法」那颗星是这副牌上的名次增量,20~30 次蒙特卡洛下有 ±0.2 位噪声、会在
+        边界抖;EV loss 是逐决策直接测的,不抖,才是判水平该看的。
+        """
+        r = self.ev_loss_rank()
+        if r is None:
+            return ""
+        val = self.strengths[self.hero].ev_loss
+        tag = {1: "四家最低", 2: "四家第 2 低", 3: "四家第 3 低", 4: "四家最高"}[r]
+        return f"EV loss {val:.2f}({tag})"
+
     def _p_worse_equal(self) -> float:
         """P(名次 ≥ 实际):你的同水平打到"这么差或更差"的概率。"""
         if not self.self_pcts:
@@ -177,7 +197,8 @@ class Diagnosis:
             f"  牌   {_stars(self.deal_gain)}  {self.deal_label:<6}"
             f"均等水平下,这个座位期望 {self.deal_ev:.2f} 位",
             f"  打   {_stars(self.skill_gain)}  {self.skill_label:<6}"
-            f"你的打法把期望推到 {self.self_ev:.2f} 位({self.skill_gain:+.2f})",
+            f"你的打法把期望推到 {self.self_ev:.2f} 位({self.skill_gain:+.2f})"
+            + (f"   ← {self.skill_note()}" if self.skill_note() else ""),
             f"  运   {self.luck_stars()}  {self.luck_label:<6}"
             + (f"你的同水平里,{self.actual} 位或更差占 "
                f"{self._p_worse_equal()*100:.0f}%"
